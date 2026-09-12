@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ElementType, ComponentType } from 'react';
+import React, { useState, useEffect, type ElementType, type ComponentType } from 'react';
 
 // --- PADRÃO 1: CUSTOM HOOKS (Lógica de Negócio Reutilizável) ---
 const useWindowSize = () => {
