@@ -1,284 +1,330 @@
 import React, { useState } from 'react';
 
-interface TestCase {
-  id: string;
-  name: string;
-  suite: string;
-  durationMs: number;
-  status: 'idle' | 'running' | 'passed' | 'failed';
-  assertion: string;
-}
+// --- COMPONENTE ALVO DO TESTE (SUT - System Under Test) ---
+const CounterWidget = () => {
+  const [count, setCount] = useState(0);
 
-const INITIAL_TESTS: TestCase[] = [
-  {
-    id: 't1',
-    name: 'deve renderizar o título do componente corretamente',
-    suite: 'Button.spec.tsx',
-    durationMs: 8,
-    status: 'idle',
-    assertion: 'expect(screen.getByText("Enviar")).toBeInTheDocument()'
-  },
-  {
-    id: 't2',
-    name: 'deve disparar evento onClick quando clicado pelo usuário',
-    suite: 'Button.spec.tsx',
-    durationMs: 14,
-    status: 'idle',
-    assertion: 'expect(mockFn).toHaveBeenCalledTimes(1)'
-  },
-  {
-    id: 't3',
-    name: 'deve exibir mensagem de erro se e-mail for inválido',
-    suite: 'LoginForm.spec.tsx',
-    durationMs: 22,
-    status: 'idle',
-    assertion: 'expect(screen.getByRole("alert")).toHaveTextContent("E-mail inválido")'
-  },
-  {
-    id: 't4',
-    name: 'deve atualizar estado da store Zustand sem mutação direta',
-    suite: 'CartStore.spec.ts',
-    durationMs: 11,
-    status: 'idle',
-    assertion: 'expect(useCartStore.getState().items).toHaveLength(1)'
-  },
-  {
-    id: 't5',
-    name: 'deve realizar fallback em caso de erro 500 no Fetch',
-    suite: 'HttpClient.spec.ts',
-    durationMs: 34,
-    status: 'idle',
-    assertion: 'expect(response.source).toBe("cache-mock")'
-  }
-];
+  return (
+    <div 
+      className="sut-container" 
+      style={{ padding: '2rem', background: '#fff', borderRadius: '8px', border: '2px dashed #cbd5e1', textAlign: 'center' }}
+      data-testid="counter-widget"
+    >
+      <h3 style={{ margin: '0 0 1rem 0', color: '#0f172a' }}>Meu Contador</h3>
+      <div 
+        data-testid="count-value" 
+        style={{ fontSize: '3rem', fontWeight: 900, color: '#3b82f6', marginBottom: '1.5rem' }}
+      >
+        {count}
+      </div>
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+        <button 
+          onClick={() => setCount(c => c - 1)} 
+          className="btn btn-secondary"
+          name="Diminuir"
+        >
+          - Diminuir
+        </button>
+        <button 
+          onClick={() => setCount(c => c + 1)} 
+          className="btn btn-primary"
+          name="Aumentar"
+        >
+          + Aumentar
+        </button>
+      </div>
+    </div>
+  );
+};
 
-export const Modulo10Testes: React.FC = () => {
-  
-  const [tests, setTests] = useState<TestCase[]>(INITIAL_TESTS);
-  const [isRunningAll, setIsRunningAll] = useState(false);
-  const [executedCount, setExecutedCount] = useState(0);
 
-  const runAllTests = async () => {
-    setIsRunningAll(true);
-    setExecutedCount(0);
+// --- SIMULADOR DE TESTES (Vitest / RTL Fake Runner) ---
+const TestSimulator = () => {
+  const [testState, setTestState] = useState<'idle' | 'running' | 'success'>('idle');
+  const [activeStep, setActiveStep] = useState(0);
 
-    // Reset status
-    setTests(prev => prev.map(t => ({ ...t, status: 'idle' })));
+  const runTests = () => {
+    setTestState('running');
+    setActiveStep(1);
 
-    for (let i = 0; i < tests.length; i++) {
-      setTests(prev =>
-        prev.map((t, idx) => (idx === i ? { ...t, status: 'running' } : t))
-      );
-
-      await new Promise(r => setTimeout(r, 250));
-
-      setTests(prev =>
-        prev.map((t, idx) => (idx === i ? { ...t, status: 'passed' } : t))
-      );
-      setExecutedCount(c => c + 1);
-    }
-
-    setIsRunningAll(false);
+    setTimeout(() => setActiveStep(2), 1000);
+    setTimeout(() => setActiveStep(3), 2000);
+    setTimeout(() => {
+      setActiveStep(4);
+      setTestState('success');
+    }, 3000);
   };
 
-  const passedCount = tests.filter(t => t.status === 'passed').length;
-  const totalDuration = tests.reduce((acc, t) => acc + t.durationMs, 0);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', background: '#0f172a', color: '#f8fafc', padding: '1.5rem', borderRadius: '8px' }}>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444' }} />
+          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#eab308' }} />
+          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#22c55e' }} />
+          <span style={{ fontFamily: 'monospace', color: '#94a3b8', marginLeft: '0.5rem' }}>vitest run --ui</span>
+        </div>
+        <button 
+          onClick={runTests} 
+          disabled={testState === 'running'}
+          className="btn btn-primary btn-sm"
+          style={{ background: '#22c55e', border: 'none' }}
+        >
+          {testState === 'running' ? 'Executando...' : '▶ Rodar Testes'}
+        </button>
+      </div>
 
+      <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        
+        {/* Teste 1 */}
+        <div style={{ opacity: activeStep >= 1 ? 1 : 0.4 }}>
+          <span style={{ color: activeStep > 1 ? '#22c55e' : (activeStep === 1 ? '#eab308' : '#94a3b8') }}>
+            {activeStep > 1 ? '✓' : (activeStep === 1 ? '↻' : '○')} 
+          </span>
+          <span style={{ marginLeft: '0.75rem', fontWeight: 600 }}>Deve renderizar o contador em 0</span>
+          {activeStep >= 1 && (
+            <div style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '1.5rem', marginTop: '0.25rem' }}>
+              &gt; render(&lt;CounterWidget /&gt;)<br/>
+              &gt; expect(screen.getByTestId('count-value')).toHaveTextContent('0')
+            </div>
+          )}
+        </div>
+
+        {/* Teste 2 */}
+        <div style={{ opacity: activeStep >= 2 ? 1 : 0.4 }}>
+          <span style={{ color: activeStep > 2 ? '#22c55e' : (activeStep === 2 ? '#eab308' : '#94a3b8') }}>
+            {activeStep > 2 ? '✓' : (activeStep === 2 ? '↻' : '○')} 
+          </span>
+          <span style={{ marginLeft: '0.75rem', fontWeight: 600 }}>Deve aumentar o valor ao clicar no botão</span>
+          {activeStep >= 2 && (
+            <div style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '1.5rem', marginTop: '0.25rem' }}>
+              &gt; fireEvent.click(screen.getByRole('button', &#123; name: /aumentar/i &#125;))<br/>
+              &gt; expect(screen.getByTestId('count-value')).toHaveTextContent('1')
+            </div>
+          )}
+        </div>
+
+        {/* Teste 3 */}
+        <div style={{ opacity: activeStep >= 3 ? 1 : 0.4 }}>
+          <span style={{ color: activeStep > 3 ? '#22c55e' : (activeStep === 3 ? '#eab308' : '#94a3b8') }}>
+            {activeStep > 3 ? '✓' : (activeStep === 3 ? '↻' : '○')} 
+          </span>
+          <span style={{ marginLeft: '0.75rem', fontWeight: 600 }}>Deve diminuir o valor permitindo números negativos</span>
+          {activeStep >= 3 && (
+            <div style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '1.5rem', marginTop: '0.25rem' }}>
+              &gt; userEvent.click(screen.getByRole('button', &#123; name: /diminuir/i &#125;))<br/>
+              &gt; expect(screen.getByTestId('count-value')).toHaveTextContent('-1')
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {testState === 'success' && (
+        <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid #22c55e', borderRadius: '4px', color: '#4ade80', textAlign: 'center', fontWeight: 800 }}>
+          Test Suites: 1 passed, 1 total<br/>
+          Tests: 3 passed, 3 total<br/>
+          Time: 3.01s
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+
+// --- COMPONENTE PRINCIPAL (PÁGINA) ---
+export const Modulo10Testes: React.FC = () => {
   return (
     <div className="page-container">
       <div className="page-header">
         <div className="badge-container">
-          <span className="badge badge-primary">Fase 3: Nível Arquiteto</span>
+          <span className="badge badge-primary">Fase 3: Avançado</span>
           <span className="badge badge-neutral">Módulo 10</span>
         </div>
-        <h1>Testes com Vitest & Testing Library</h1>
+        <h1>Testes Automatizados (Vitest + RTL)</h1>
         <p className="subtitle">
-          Testes unitários e de integração de componentes, hooks, stores e simulação de mocks.
+          Garantindo a resiliência do código: Testes Unitários, de Integração e o padrão "Render, Act, Assert" com React Testing Library.
         </p>
       </div>
 
-      
-
-      
-
-      
-
-      
-
-      
-    
-        
-      {/* SEÇÃO: 📖 Teoria */}
+      {/* SEÇÃO: 📖 Teoria Completa */}
       <section className="module-section">
-        <h2 className="section-title">📖 Teoria</h2>
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <h2 className="section-title">📖 Teoria Completa & Padrões Visuais</h2>
+        
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+          
+          {/* Tópico 1 */}
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
-              A Filosofia da React Testing Library
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🧪 1. A Pirâmide de Testes
             </h3>
-            <p style={{ color: '#475569', lineHeight: 1.6 }}>
-              <em>"The more your tests resemble the way your software is used, the more confidence they can give you."</em> — Kent C. Dodds.
-            </p>
-            <p style={{ color: '#475569', lineHeight: 1.6, marginTop: '0.5rem' }}>
-              Nunca teste detalhes de implementação internos (como o nome de uma variável de estado). Teste o que o usuário enxerga e como ele interage:
-            </p>
-            <ul style={{ marginLeft: '1.5rem', marginTop: '0.5rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <li>Prefira <code>screen.getByRole('button', &#123; name: /enviar/i &#125;)</code> em vez de seletores CSS.</li>
-              <li>Use <code>userEvent</code> para simular cliques e digitação real do usuário.</li>
-            </ul>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+              <div>
+                <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  Escrever testes manuais (clicar pela tela toda vez que fazemos um build) é lento e falho. Em aplicações profissionais, nós escrevemos robôs que testam o nosso código em milissegundos.
+                </p>
+                <ul style={{ color: '#475569', lineHeight: 1.6, paddingLeft: '1.5rem' }}>
+                  <li><strong>E2E (Cypress/Playwright):</strong> Testa o site inteiro abrindo um navegador real. (Lentos, porém fiéis).</li>
+                  <li><strong>Integração (RTL):</strong> Testa como os componentes interagem. É o foco principal no React.</li>
+                  <li><strong>Unitários (Vitest/Jest):</strong> Testa funções isoladas puras do JS (Ex: formatação de datas).</li>
+                </ul>
+              </div>
+              <div>
+                <img 
+                  src="https://placehold.co/600x400/e0f2fe/0369a1?text=%5B+++E2E+++%5D%5Cn%5B++Integra%C3%A7%C3%A3o++%5D%5Cn%5B+++++Unit%C3%A1rios+++++%5D%5Cn%5CnPir%C3%A2mide+do+Mercado!" 
+                  alt="A Pirâmide de Testes" 
+                  style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                />
+              </div>
+            </div>
           </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
+
+          {/* Tópico 2 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🎯 2. React Testing Library (RTL) vs O Passado (Enzyme)
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+              <div style={{ order: 2 }}>
+                <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  Antigamente (com o Enzyme), testávamos "como" o React funcionava por dentro: Líamos o <code>useState</code> diretamente para ver se a variável mudou de 0 para 1.
+                </p>
+                <p style={{ color: '#475569', lineHeight: 1.6 }}>
+                  A React Testing Library mudou tudo com uma filosofia matadora: <strong>"Teste seu software da mesma forma que os usuários o utilizam"</strong>. O usuário não vê o `useState`, ele vê o <strong>DOM</strong> (texto e botões). O RTL foca em ler a tela renderizada!
+                </p>
+              </div>
+              <div style={{ order: 1 }}>
+                <img 
+                  src="https://placehold.co/600x400/fef2f2/991b1b?text=Errado:+expect(state).toBe(1)%5Cn%5CnCerto:+expect(screen.getByText('1')).%5CntoBeVisible()" 
+                  alt="Filosofia do RTL" 
+                  style={{ width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
+          
+          {/* Tópico 3 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              📏 3. O Padrão AAA (Arrange, Act, Assert)
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+              <div>
+                <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  Todo bom teste de componente segue estritamente 3 passos lógicos:
+                </p>
+                <ul style={{ color: '#475569', lineHeight: 1.6, paddingLeft: '1.5rem' }}>
+                  <li><strong>Arrange (Preparar):</strong> Você invoca o <code>render(&lt;App/&gt;)</code> para jogar o componente no DOM virtual de testes.</li>
+                  <li><strong>Act (Agir):</strong> Você simula a ação do usuário com o <code>fireEvent.click(...)</code>.</li>
+                  <li><strong>Assert (Afirmar):</strong> Você verifica se o resultado esperado está na tela com o <code>expect(...)</code>.</li>
+                </ul>
+              </div>
+              <div>
+                <img 
+                  src="https://placehold.co/600x400/f0fdf4/166534?text=1.+ARRANGE+(render)%5Cn%E2%86%93%5Cn2.+ACT+(click)%5Cn%E2%86%93%5Cn3.+ASSERT+(expect)" 
+                  alt="Padrão AAA" 
+                  style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                />
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 💻 Exemplos Práticos */}
       <section className="module-section">
-        <h2 className="section-title">💻 Exemplos Práticos</h2>
+        <h2 className="section-title">💻 Como fazer no Código?</h2>
         <div className="glass-card">
           <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1rem' }}>
-            Exemplo de Teste Unitário com Vitest + RTL
+            A Anatomia de um Teste Perfeito
           </h3>
+          <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Arquivos de teste ficam junto com o componente (ex: <code>Button.test.tsx</code>). Usamos as queries semânticas como <code>getByRole</code> (acessibilidade) sempre que possível!
+          </p>
           <pre>
-            <code>{`import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Button } from './Button';
+            <code>{`import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import CounterWidget from './CounterWidget';
 
-describe('Button Component', () => {
-  it('deve chamar a callback quando clicado', () => {
-    const handleClick = vi.fn();
-    render(<Button onClick={handleClick}>Enviar</Button>);
-
-    const button = screen.getByRole('button', { name: /enviar/i });
+describe('CounterWidget Component', () => {
+  it('should increment the count when the plus button is clicked', () => {
+    // 1. Arrange
+    render(<CounterWidget />);
+    
+    // 2. Act
+    const button = screen.getByRole('button', { name: /aumentar/i });
     fireEvent.click(button);
-
-    expect(handleClick).toHaveBeenCalledTimes(1);
+    
+    // 3. Assert
+    const countDisplay = screen.getByTestId('count-value');
+    expect(countDisplay).toHaveTextContent('1');
   });
 });`}</code>
           </pre>
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 🧪 Prática / Simulador */}
       <section className="module-section">
-        <h2 className="section-title">🧪 Prática / Simulador</h2>
+        <h2 className="section-title">🧪 Prática: O Terminal de Testes</h2>
+        
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {/* Dashboard de Testes */}
+          
           <div className="grid-2">
-            <div className="stat-card" style={{ background: '#f0fdf4', borderColor: '#bbf7d0' }}>
-              <span className="stat-value" style={{ color: '#16a34a' }}>
-                {passedCount} / {tests.length}
-              </span>
-              <span className="stat-label">Testes Passando (100% Pass)</span>
-              <span className="stat-detail">Suíte de testes automatizados com Vitest v5</span>
-            </div>
-
-            <div className="stat-card" style={{ background: '#ffffff' }}>
-              <span className="stat-value" style={{ color: '#0284c7' }}>
-                {totalDuration} ms
-              </span>
-              <span className="stat-label">Tempo Total de Execução</span>
-              <span className="stat-detail">Vitest alimentado pelo Vite e ESM nativo</span>
-            </div>
-          </div>
-
-          <div className="glass-card">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
-                  🚀 Test Runner Interativo
-                </h3>
-                <p style={{ color: '#64748b', fontSize: '0.85rem' }}>
-                  Clique no botão para executar a pipeline de testes em tempo real.
+            
+            {/* O Componente SUT */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b' }}>🧩 O Componente Real</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Você pode clicar e interagir manualmente (Teste Humano).
                 </p>
               </div>
-
-              <button
-                onClick={runAllTests}
-                disabled={isRunningAll}
-                className="btn btn-primary"
-              >
-                {isRunningAll ? `Executando (${executedCount}/${tests.length})...` : '▶ Executar Testes no Vitest'}
-              </button>
+              <CounterWidget />
             </div>
 
-            {/* Terminal de Testes */}
-            <div style={{ background: '#0f172a', borderRadius: 'var(--radius-md)', padding: '1.25rem', color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444' }}></span>
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b' }}></span>
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></span>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginLeft: '0.5rem' }}>
-                  terminal: vitest run --reporter=verbose
-                </span>
+            {/* O Terminal de Teste */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid #22c55e' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b' }}>🤖 O Executor (Vitest)</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Aperte "Rodar Testes" para ver como o robô analisa o componente da esquerda em modo "headless" (sem navegador visível).
+                </p>
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {tests.map(test => (
-                  <div
-                    key={test.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: '0.85rem',
-                      padding: '0.4rem 0',
-                      borderBottom: '1px solid rgba(255,255,255,0.05)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <span>
-                        {test.status === 'passed' && '✅'}
-                        {test.status === 'running' && '⏳'}
-                        {test.status === 'idle' && '⚪'}
-                      </span>
-                      <span style={{ color: '#38bdf8', fontWeight: 600 }}>{test.suite}</span>
-                      <span style={{ color: '#cbd5e1' }}>› {test.name}</span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{test.durationMs}ms</span>
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          padding: '0.15rem 0.45rem',
-                          borderRadius: '4px',
-                          background: test.status === 'passed' ? '#166534' : 'rgba(255,255,255,0.1)',
-                          color: test.status === 'passed' ? '#86efac' : '#94a3b8'
-                        }}
-                      >
-                        {test.status.toUpperCase()}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {passedCount === tests.length && (
-                <div style={{ marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.1)', color: '#4ade80', fontSize: '0.9rem', fontWeight: 700 }}>
-                  ✓ 5 tests passed in {totalDuration}ms (Vitest v5)
-                </div>
-              )}
+              <TestSimulator />
             </div>
+
           </div>
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 🛡️ Boas Práticas */}
       <section className="module-section">
-        <h2 className="section-title">🛡️ Boas Práticas</h2>
+        <h2 className="section-title">🛡️ Boas Práticas & Mercado</h2>
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="alert alert-success">
+          
+          <div className="alert alert-warning">
             <div>
-              <strong>Mocking de APIs:</strong> Nunca faça chamadas HTTP reais em testes unitários automatizados. Utilize <code>vi.spyOn(global, 'fetch')</code> ou Mock Service Worker (MSW) para simular respostas previsíveis e testes que rodam em milissegundos.
+              <strong>Cuidado com o <code>getByTestId</code>:</strong> A regra oficial do RTL é buscar elementos pela Acessibilidade (<code>getByRole</code>, <code>getByLabelText</code>). Se você usar <code>data-testid</code> para tudo, seus testes não garantirão que leitores de tela ou pessoas cegas conseguirão usar sua aplicação. Deixe o test-id apenas para textos dinâmicos!
             </div>
           </div>
+
+          <div className="alert alert-success">
+            <div>
+              <strong>userEvent vs fireEvent:</strong> A documentação recomenda usar a biblioteca <code>@testing-library/user-event</code> no lugar do <code>fireEvent</code> puro. O motivo? O `userEvent.type()` não apenas muda o valor do input, mas ele simula fidedignamente o hover, o click, o foco e a digitação letra por letra, disparando todos os eventos nativos na ordem correta!
+            </div>
+          </div>
+
         </div>
       </section>
-        
-      
-</div>
+
+    </div>
   );
 };
