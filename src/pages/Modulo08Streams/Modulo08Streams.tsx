@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 
 // --- SIMULADORES PARA O LABORATÓRIO ---
 
@@ -57,7 +57,6 @@ const HeavyWidgetContent = () => {
 };
 
 // Simulador de Lazy Loading manual
-let fakeHeavyPromise: Promise<any> | null = null;
 const suspenseCache = new Map();
 
 const SuspenseSimulator = ({ id }: { id: string }) => {
