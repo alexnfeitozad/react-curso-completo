@@ -16,7 +16,7 @@ const FakeProducts = ({ onNavigate }: { onNavigate: (path: string) => void }) =>
     <ul style={{ listStyle: 'none', padding: 0, display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
       {['101', '102', '103'].map(id => (
         <li key={id}>
-          <button onClick={() => onNavigate(\`/produtos/\${id}\`)} className="btn btn-secondary btn-sm">
+          <button onClick={() => onNavigate(`/produtos/${id}`)} className="btn btn-secondary btn-sm">
             Ver Produto {id}
           </button>
         </li>
@@ -227,7 +227,7 @@ const ProtectedRoute = ({ isLogged }: { isLogged: boolean }) => {
               {/* Botão de Login Global */}
               <button 
                 onClick={() => setIsAuthenticated(!isAuthenticated)}
-                className={\`btn \${isAuthenticated ? 'btn-danger' : 'btn-primary'}\`}
+                className={`btn ${isAuthenticated ? 'btn-danger' : 'btn-primary'}`}
                 style={{ padding: '0.5rem 1rem' }}
               >
                 {isAuthenticated ? 'Sair (Logout)' : 'Fazer Login (Admin)'}
@@ -286,7 +286,7 @@ const ProtectedRoute = ({ isLogged }: { isLogged: boolean }) => {
           
           <div className="alert alert-warning">
             <div>
-              <strong>Layouts com Outlet:</strong> Não copie e cole sua Sidebar e Header em 50 páginas diferentes. Crie uma rota pai chamada `<MainLayout>` que contém o Header, e no local onde o conteúdo deve aparecer, coloque o componente <code>&lt;Outlet /&gt;</code> do React Router. O Router injetará o componente filho exato na fenda do Outlet!
+              <strong>Layouts com Outlet:</strong> Não copie e cole sua Sidebar e Header em 50 páginas diferentes. Crie uma rota pai chamada <code>&lt;MainLayout&gt;</code> que contém o Header, e no local onde o conteúdo deve aparecer, coloque o componente <code>&lt;Outlet /&gt;</code> do React Router. O Router injetará o componente filho exato na fenda do Outlet!
             </div>
           </div>
 
