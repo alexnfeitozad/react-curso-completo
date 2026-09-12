@@ -1,289 +1,308 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, ElementType, ComponentType } from 'react';
 
-// --- Strategy Pattern Interfaces & Implementations ---
-interface PaymentStrategy {
-  name: string;
-  icon: string;
-  calculateFee: (amount: number) => number;
-  processPayment: (amount: number) => { success: boolean; transactionId: string; details: string };
-}
+// --- PADRÃO 1: CUSTOM HOOKS (Lógica de Negócio Reutilizável) ---
+const useWindowSize = () => {
+  const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
-class CreditCardStrategy implements PaymentStrategy {
-  name = 'Cartão de Crédito';
-  icon = '💳';
+  useEffect(() => {
+    const handleResize = () => setSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  calculateFee(amount: number) {
-    return amount * 0.035; // 3.5% taxa de gateway
-  }
-
-  processPayment(amount: number) {
-    const fee = this.calculateFee(amount);
-    return {
-      success: true,
-      transactionId: `CC-${Math.floor(Math.random() * 899999 + 100000)}`,
-      details: `Aprovado via adquirente Cielo/Stripe. Total R$ ${(amount + fee).toFixed(2)} (Taxa: R$ ${fee.toFixed(2)}).`
-    };
-  }
-}
-
-class PixStrategy implements PaymentStrategy {
-  name = 'Pix Instantâneo';
-  icon = '⚡';
-
-  calculateFee(amount: number) {
-    return -amount * 0.05; // 5% de desconto promocional
-  }
-
-  processPayment(amount: number) {
-    const discount = Math.abs(this.calculateFee(amount));
-    return {
-      success: true,
-      transactionId: `PIX-${Math.floor(Math.random() * 899999 + 100000)}`,
-      details: `Chave copia-e-cola gerada. Desconto de R$ ${discount.toFixed(2)} aplicado. Total a pagar: R$ ${(amount - discount).toFixed(2)}.`
-    };
-  }
-}
-
-class BoletoStrategy implements PaymentStrategy {
-  name = 'Boleto Bancário';
-  icon = '📄';
-
-  calculateFee(_amount: number) {
-    return 2.50; // Taxa fixa de emissão de boleto
-  }
-
-  processPayment(amount: number) {
-    const fee = this.calculateFee(amount);
-    return {
-      success: true,
-      transactionId: `BOL-${Math.floor(Math.random() * 899999 + 100000)}`,
-      details: `Código de barras gerado. Vencimento em 3 dias úteis. Total R$ ${(amount + fee).toFixed(2)}.`
-    };
-  }
-}
-
-const STRATEGIES: Record<string, PaymentStrategy> = {
-  pix: new PixStrategy(),
-  card: new CreditCardStrategy(),
-  boleto: new BoletoStrategy(),
+  return size;
 };
 
-export const Modulo12Patterns: React.FC = () => {
-  
-  // Strategy Lab State
-  const [selectedStrategyKey, setSelectedStrategyKey] = useState<'pix' | 'card' | 'boleto'>('pix');
-  const [baseAmount, setBaseAmount] = useState(300);
-  const [paymentReceipt, setPaymentReceipt] = useState<{
-    success: boolean;
-    transactionId: string;
-    details: string;
-  } | null>(null);
+// --- PADRÃO 2: HIGHER ORDER COMPONENTS (HOC) ---
+// Uma função que recebe um Componente e devolve UM NOVO COMPONENTE turbinado!
+function withClickLogger<P extends object>(WrappedComponent: ComponentType<P>, componentName: string) {
+  // Retornamos o novo componente
+  return function EnhancedComponent(props: P) {
+    const handleClick = () => {
+      // Lógica injetada pelo HOC
+      alert(`[Analytics] Clique registrado no componente: ${componentName}!`);
+    };
 
-  const currentStrategy = STRATEGIES[selectedStrategyKey];
-  const feeOrDiscount = currentStrategy.calculateFee(baseAmount);
-  const finalAmount = baseAmount + feeOrDiscount;
-
-  const handlePay = () => {
-    const receipt = currentStrategy.processPayment(baseAmount);
-    setPaymentReceipt(receipt);
+    return (
+      <div onClick={handleClick} style={{ display: 'inline-block', cursor: 'pointer', outline: '2px dashed #eab308', padding: '0.25rem' }} title="Este componente foi empacotado por um HOC!">
+        <WrappedComponent {...props} />
+      </div>
+    );
   };
+}
+
+// Componente Básico e Burro (Presentational)
+const SimpleButton = ({ label }: { label: string }) => (
+  <button className="btn btn-primary">{label}</button>
+);
+const SimpleCard = ({ title }: { title: string }) => (
+  <div style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '1rem', borderRadius: '4px' }}>{title}</div>
+);
+
+// HOC em ação: Gerando novos componentes turbinados
+const LoggableButton = withClickLogger(SimpleButton, 'BotaoDeCompra');
+const LoggableCard = withClickLogger(SimpleCard, 'CardDeProduto');
+
+
+// --- PADRÃO 3: POLIMORFISMO (O Padrão 'as') ---
+// Permite que o componente mude sua TAG HTML sem perder os estilos globais
+interface TextProps {
+  as?: ElementType;
+  children: React.ReactNode;
+  isHighlight?: boolean;
+}
+
+const PolymorphicText = ({ as: Component = 'p', children, isHighlight }: TextProps) => {
+  return (
+    <Component style={{ 
+      color: isHighlight ? '#6366f1' : '#334155', 
+      fontWeight: Component === 'h1' ? 900 : (isHighlight ? 700 : 400),
+      margin: 0
+    }}>
+      {children}
+    </Component>
+  );
+};
+
+
+// --- COMPONENTE PRINCIPAL (PÁGINA) ---
+export const Modulo12Patterns: React.FC = () => {
+  const { width, height } = useWindowSize();
 
   return (
     <div className="page-container">
       <div className="page-header">
         <div className="badge-container">
-          <span className="badge badge-primary">Fase 3: Nível Arquiteto</span>
+          <span className="badge badge-primary">Fase 3: Avançado</span>
           <span className="badge badge-neutral">Módulo 12</span>
         </div>
-        <h1>Design Patterns & Princípios SOLID</h1>
+        <h1>Design Patterns no React</h1>
         <p className="subtitle">
-          Padrão Comportamental Strategy, Desacoplamento e os 5 Princípios SOLID no Frontend.
+          Padrões de Arquitetura: HOCs, Custom Hooks, Componentes Polimórficos e a Separação de Responsabilidades (Container vs Presentational).
         </p>
       </div>
 
-      
-
-      
-
-      
-
-      
-
-      
-    
-        
-      {/* SEÇÃO: 📖 Teoria */}
+      {/* SEÇÃO: 📖 Teoria Completa */}
       <section className="module-section">
-        <h2 className="section-title">📖 Teoria</h2>
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <h2 className="section-title">📖 Teoria Completa & Padrões Visuais</h2>
+        
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+          
+          {/* Tópico 1 */}
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
-              Os 5 Princípios SOLID no Frontend
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🎣 1. Custom Hooks (A Magia da Extração)
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-              <div style={{ padding: '0.85rem', background: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--neutral-200)' }}>
-                <strong>S — Single Responsibility Principle (SRP):</strong> Um componente deve ser responsável apenas pela visualização ou apenas pela lógica de negócios (através de um Custom Hook).
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+              <div>
+                <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  Componentes React servem para desenhar UI. Se o seu componente tem 200 linhas de <code>useState</code> e lógica de validação de formulário, ele está fazendo o papel errado.
+                </p>
+                <p style={{ color: '#475569', lineHeight: 1.6 }}>
+                  Criar um <strong>Custom Hook</strong> significa arrancar toda a lógica de negócio do componente e colocá-la em uma função separada que começa com `use`. Assim, qualquer tela do seu sistema pode reutilizar essa mesma lógica sem copiar e colar código.
+                </p>
               </div>
-              <div style={{ padding: '0.85rem', background: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--neutral-200)' }}>
-                <strong>O — Open/Closed Principle (OCP):</strong> Componentes devem estar abertos para extensão (via children, compound components e props de renderização), mas fechados para modificação direta em seu núcleo.
-              </div>
-              <div style={{ padding: '0.85rem', background: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--neutral-200)' }}>
-                <strong>L — Liskov Substitution Principle (LSP):</strong> Um subtipo ou componente especializado deve poder substituir o componente base sem quebrar o comportamento da aplicação (ex: <code>&lt;PrimaryButton /&gt;</code> deve aceitar todas as propriedades HTML de um <code>&lt;button /&gt;</code>).
-              </div>
-              <div style={{ padding: '0.85rem', background: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--neutral-200)' }}>
-                <strong>I — Interface Segregation Principle (ISP):</strong> Não force um componente a depender de uma interface gigante contendo 30 propriedades se ele só precisa de <code>id</code> e <code>title</code>.
-              </div>
-              <div style={{ padding: '0.85rem', background: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--neutral-200)' }}>
-                <strong>D — Dependency Inversion Principle (DIP):</strong> Componentes devem depender de abstrações (interfaces/hooks de serviço), e não de instâncias concretas acopladas diretamente (ex: invocar <code>apiClient</code> abstrato em vez de <code>axios.post</code> estático).
+              <div>
+                <img 
+                  src="https://placehold.co/600x400/e0f2fe/0369a1?text=Componente+%3D+UI+%2B+L%C3%B3gica%5Cn%E2%86%93%5CnuseForm()+%3D+S%C3%B3+L%C3%B3gica%5Cn%E2%86%93%5CnLimpeza+e+Reutiliza%C3%A7%C3%A3o%21" 
+                  alt="Esquema Custom Hooks" 
+                  style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                />
               </div>
             </div>
           </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
+
+          {/* Tópico 2 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              📦 2. Higher Order Components (HOC)
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+              <div style={{ order: 2 }}>
+                <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  É um padrão clássico e muito usado por bibliotecas (como o <code>connect()</code> do Redux antigo ou o <code>withRouter()</code>).
+                </p>
+                <p style={{ color: '#475569', lineHeight: 1.6 }}>
+                  Um HOC <strong>não é um componente</strong>. É uma função que recebe um componente "burro" e devolve um novo componente "inteligente", envelopado com funcionalidades extras, como sistema de permissões ou injeção de dados.
+                </p>
+              </div>
+              <div style={{ order: 1 }}>
+                <img 
+                  src="https://placehold.co/600x400/fef2f2/991b1b?text=HOC(Bot%C3%A3o)%5Cn%E2%86%93%5CnRetorna%3A%5Cn%3CWrapper+Analytics%3E%5Cn++%3CBot%C3%A3o+Original+%2F%3E%5Cn%3C%2FWrapper%3E" 
+                  alt="Esquema HOC" 
+                  style={{ width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
+          
+          {/* Tópico 3 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🎭 3. Componentes Polimórficos (Polymorphism)
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+              <div>
+                <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  Design Systems (como Radix, ChakraUI, Tailwind UI) amam esse padrão. A ideia é criar um componente visual incrível (ex: um <code>&lt;Button&gt;</code>) mas permitir que o desenvolvedor decida qual TAG HTML ele deve ser renderizado usando a prop <strong><code>as</code></strong>.
+                </p>
+                <p style={{ color: '#475569', lineHeight: 1.6 }}>
+                  Assim, você pode ter um Botão perfeito que, pro SEO e Acessibilidade, na verdade é uma tag <code>&lt;a href="..."&gt;</code> (Link).
+                </p>
+              </div>
+              <div>
+                <img 
+                  src="https://placehold.co/600x400/f0fdf4/166534?text=%3CBox+as%3D%22section%22%3E%5Cn...%5Cn%3CBox+as%3D%22nav%22%3E%5Cn%5CnMesmo+Design%2C%5CnTags+HTML+diferentes%21" 
+                  alt="Esquema Polimorfismo" 
+                  style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                />
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 💻 Exemplos Práticos */}
       <section className="module-section">
-        <h2 className="section-title">💻 Exemplos Práticos</h2>
+        <h2 className="section-title">💻 Como fazer no Código?</h2>
         <div className="glass-card">
           <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1rem' }}>
-            Interface e Injeção da Strategy Pattern
+            A Mágica do Polimorfismo no TypeScript
           </h3>
+          <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Usamos o tipo genérico <code>ElementType</code> do React para receber qual tag ou qual componente externo queremos renderizar. Letra maiúscula na desestruturação é obrigatória!
+          </p>
           <pre>
-            <code>{`export interface PaymentStrategy {
-  name: string;
-  calculateFee: (amount: number) => number;
-  processPayment: (amount: number) => Promise<PaymentResult>;
+            <code>{`interface FlexProps {
+  as?: React.ElementType; // Pode ser 'div', 'section', 'ul' ou até o <Link> do Router!
+  children: React.ReactNode;
 }
 
-export const PaymentCheckout = ({ strategy }: { strategy: PaymentStrategy }) => {
-  const handlePay = () => {
-    strategy.processPayment(100);
-  };
-  return <button onClick={handlePay}>Pagar via {strategy.name}</button>;
-};`}</code>
+const FlexBox = ({ as: Component = 'div', children }: FlexProps) => {
+  return (
+    <Component style={{ display: 'flex', gap: '1rem' }}>
+      {children}
+    </Component>
+  );
+};
+
+// Como usar:
+// <FlexBox as="ul"> ... </FlexBox>`}</code>
           </pre>
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 🧪 Prática / Simulador */}
       <section className="module-section">
-        <h2 className="section-title">🧪 Prática / Simulador</h2>
+        <h2 className="section-title">🧪 Prática: Laboratório de Padrões</h2>
+        
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div className="glass-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-              💳 Laboratório de Design Pattern: Strategy de Pagamento
-            </h3>
-            <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              O padrão <strong>Strategy</strong> permite alternar o algoritmo de checkout em tempo de execução sem encher seu componente de <code>if/else</code> gigantescos. Novos métodos (ex: Crypto, PayPal) podem ser adicionados sem alterar o código existente (Princípio Open/Closed).
-            </p>
-
-            <div className="grid-2">
-              <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-200)' }}>
-                <h4 style={{ fontWeight: 700, marginBottom: '1rem', color: '#0f172a' }}>1. Selecione o Gateway (Strategy)</h4>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.25rem' }}>
-                  {Object.entries(STRATEGIES).map(([key, strat]) => (
-                    <label
-                      key={key}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.75rem 1rem',
-                        borderRadius: 'var(--radius-sm)',
-                        background: selectedStrategyKey === key ? '#f0f9ff' : '#ffffff',
-                        border: `1.5px solid ${selectedStrategyKey === key ? '#0284c7' : 'var(--neutral-200)'}`,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <input
-                          type="radio"
-                          name="paymentStrat"
-                          checked={selectedStrategyKey === key}
-                          onChange={() => {
-                            setSelectedStrategyKey(key as any);
-                            setPaymentReceipt(null);
-                          }}
-                        />
-                        <span style={{ fontSize: '1.2rem' }}>{strat.icon}</span>
-                        <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>{strat.name}</span>
-                      </div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: key === 'pix' ? '#16a34a' : '#64748b' }}>
-                        {key === 'pix' ? '5% OFF' : key === 'card' ? '+3.5% taxa' : '+R$ 2.50'}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Valor Base:</label>
-                  <input
-                    type="number"
-                    className="input"
-                    value={baseAmount}
-                    onChange={e => {
-                      setBaseAmount(Number(e.target.value));
-                      setPaymentReceipt(null);
-                    }}
-                    min="10"
-                    step="10"
-                  />
+          
+          <div className="grid-2">
+            
+            {/* Lab 1: HOC e Custom Hooks */}
+            <div className="glass-card" style={{ border: '1px solid #bae6fd', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0369a1', margin: 0 }}>
+                📦 Lab 1: HOC e Custom Hooks
+              </h3>
+              
+              <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b' }}>1. Custom Hook em ação (useWindowSize)</h4>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>
+                  Dimensione a janela do seu navegador e veja os números abaixo mudarem! A lógica de adicionar EventListeners foi abstraída do nosso componente.
+                </p>
+                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#3b82f6', marginTop: '1rem' }}>
+                  {width}px x {height}px
                 </div>
               </div>
 
-              <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-200)', display: 'flex', flexDirection: 'column' }}>
-                <h4 style={{ fontWeight: 700, marginBottom: '1rem', color: '#0f172a' }}>2. Execução da Strategy</h4>
-
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.9rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
-                    <span>Valor Original:</span>
-                    <span>R$ {baseAmount.toFixed(2)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: feeOrDiscount < 0 ? '#16a34a' : '#d97706', fontWeight: 600 }}>
-                    <span>Ajuste da Strategy:</span>
-                    <span>{feeOrDiscount < 0 ? `- R$ ${Math.abs(feeOrDiscount).toFixed(2)}` : `+ R$ ${feeOrDiscount.toFixed(2)}`}</span>
-                  </div>
-                  <div style={{ borderTop: '1px solid var(--neutral-200)', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.2rem', color: '#0f172a' }}>
-                    <span>Total Final:</span>
-                    <span style={{ color: '#0284c7' }}>R$ {finalAmount.toFixed(2)}</span>
-                  </div>
-
-                  <button onClick={handlePay} className="btn btn-primary" style={{ marginTop: '1rem' }}>
-                    Confirmar Pagamento com {currentStrategy.name}
-                  </button>
-
-                  {paymentReceipt && (
-                    <div style={{ marginTop: '1rem', padding: '1rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
-                      <div style={{ fontWeight: 800, color: '#166534', marginBottom: '0.3rem' }}>
-                        ✅ Transação Aprovada ({paymentReceipt.transactionId})
-                      </div>
-                      <div style={{ color: '#15803d' }}>{paymentReceipt.details}</div>
-                    </div>
-                  )}
+              <div style={{ background: '#fffbeb', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid #eab308' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#854d0e' }}>2. Higher Order Component (Analytics)</h4>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: '#a16207', marginBottom: '1rem' }}>
+                  Os dois componentes abaixo são originais "burros", mas foram empacotados pela função <code>withClickLogger</code>. Clique neles para ver o alerta de Analytics injetado magicamente!
+                </p>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <LoggableButton label="Comprar Agora" />
+                  <LoggableCard title="Monitor Gamer" />
                 </div>
               </div>
             </div>
+
+            {/* Lab 2: Componentes Polimórficos */}
+            <div className="glass-card" style={{ border: '1px solid #c7d2fe', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#4f46e5', margin: 0 }}>
+                  🎭 Lab 2: Polimorfismo
+                </h3>
+              </div>
+
+              <p style={{ fontSize: '0.85rem', color: '#475569', margin: 0 }}>
+                Abaixo estamos usando o MESMO componente <code>&lt;PolymorphicText&gt;</code>, porém instruindo o React a renderizá-lo com tags HTML completamente diferentes por baixo dos panos (Inspecione no F12!).
+              </p>
+
+              <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                
+                <div style={{ borderLeft: '3px solid #cbd5e1', paddingLeft: '1rem' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>as="h1"</span>
+                  <PolymorphicText as="h1" isHighlight>
+                    Sou um Título de Página (H1)
+                  </PolymorphicText>
+                </div>
+                
+                <div style={{ borderLeft: '3px solid #cbd5e1', paddingLeft: '1rem' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>as="h2"</span>
+                  <PolymorphicText as="h2">
+                    Sou um Subtítulo (H2)
+                  </PolymorphicText>
+                </div>
+
+                <div style={{ borderLeft: '3px solid #cbd5e1', paddingLeft: '1rem' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>as="p"</span>
+                  <PolymorphicText as="p">
+                    Sou apenas um parágrafo longo de texto corrido. Repare que o componente mantém as regras de Design (como cor e formatação condicional) mesmo mudando a tag base HTML para fins de SEO.
+                  </PolymorphicText>
+                </div>
+                
+                <div style={{ borderLeft: '3px solid #cbd5e1', paddingLeft: '1rem' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>as="a" (Link)</span>
+                  <PolymorphicText as="a" isHighlight>
+                    Eu sou uma Tag de Link Clicável! (a)
+                  </PolymorphicText>
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 🛡️ Boas Práticas */}
       <section className="module-section">
-        <h2 className="section-title">🛡️ Boas Práticas</h2>
+        <h2 className="section-title">🛡️ Boas Práticas & Mercado</h2>
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="alert alert-success">
+          
+          <div className="alert alert-warning">
             <div>
-              <strong>Engenharia de Elite:</strong> Ao adotar SOLID e Strategy, você desacopla seu código de tal forma que refatorações tornam-se triviais e testes unitários ficam rápidos de escrever.
+              <strong>HOC vs Hooks:</strong> Embora o HOC tenha sido febre em 2018, em aplicações modernas a comunidade prefere esmagadoramente os <strong>Custom Hooks</strong>. HOCs criam as famosas "Wrapper Hells" (montanhas de componentes inúteis na árvore do React DevTools). Use HOCs apenas para injetar propriedades visuais, e Hooks para lógica!
             </div>
           </div>
+
+          <div className="alert alert-success">
+            <div>
+              <strong>O Padrão Container/Presentational:</strong> Criado por Dan Abramov (criador do Redux). A regra é: Separe seus arquivos em Componentes "Container" (que falam com API, Redux, Zustand) e "Presentational" (que não sabem de onde a água vem, só recebem <code>props</code> e renderizam HTML bonitão). Seu código ficará infinitamente mais fácil de testar.
+            </div>
+          </div>
+
         </div>
       </section>
-        
-      
-</div>
+
+    </div>
   );
 };
