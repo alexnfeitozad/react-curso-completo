@@ -1,258 +1,338 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
-interface Post {
+// --- SERVIÇO FAKE API (Para controle do Laboratório) ---
+interface User {
   id: number;
-  title: string;
-  category: string;
-  status: 'published' | 'draft';
+  name: string;
+  email: string;
+  role: string;
 }
 
-const MOCK_POSTS: Post[] = [
-  { id: 1, title: 'Dominando o Virtual DOM no React 19', category: 'Engenharia', status: 'published' },
-  { id: 2, title: 'Por que parar de usar useEffect para dados derivados', category: 'Performance', status: 'published' },
-  { id: 3, title: 'Arquitetura Limpa e Padrão Strategy no Frontend', category: 'Arquitetura', status: 'draft' }
+const mockUsers: User[] = [
+  { id: 1, name: 'Ada Lovelace', email: 'ada@computer.com', role: 'Engineer' },
+  { id: 2, name: 'Alan Turing', email: 'alan@enigma.com', role: 'Cryptographer' },
+  { id: 3, name: 'Grace Hopper', email: 'grace@navy.mil', role: 'Compiler Creator' },
 ];
 
-export const Modulo05Http: React.FC = () => {
-  
-  const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
-  const [isLoading, setIsLoading] = useState(false);
-  const [simulateError, setSimulateError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [networkLogs, setNetworkLogs] = useState<string[]>([]);
-
-  const fetchWithRetry = async (shouldFail: boolean) => {
-    setIsLoading(true);
-    setRetryCount(0);
-    const maxRetries = 3;
-
-    setNetworkLogs(prev => [`[HTTP] Iniciando GET /api/posts...`, ...prev]);
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      setRetryCount(attempt);
-      setNetworkLogs(prev => [`[HTTP] Tentativa ${attempt} de ${maxRetries}...`, ...prev]);
-
-      // Delay de rede simulado
-      await new Promise(r => setTimeout(r, 600));
-
+const fetchUsersFakeApi = async (shouldFail: boolean, delay: number, signal?: AbortSignal): Promise<User[]> => {
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
       if (shouldFail) {
-        setNetworkLogs(prev => [
-          `[HTTP Erro 503] Falha na tentativa ${attempt}: Servidor indisponível.`,
-          ...prev
-        ]);
-        if (attempt === maxRetries) {
-          setNetworkLogs(prev => [
-            `⚠️ [Fallback Ativado] Retries esgotados. Carregando dados do Cache Mock local.`,
-            ...prev
-          ]);
-          setPosts(MOCK_POSTS);
-          setIsLoading(false);
-          return;
-        }
-        // Espera com backoff
-        await new Promise(r => setTimeout(r, 400 * attempt));
+        reject(new Error('500 Internal Server Error: O banco de dados caiu!'));
       } else {
-        setNetworkLogs(prev => [
-          `✅ [HTTP 200 OK] Resposta recebida com sucesso! ${MOCK_POSTS.length} itens sincronizados.`,
-          ...prev
-        ]);
-        setPosts(MOCK_POSTS);
-        setIsLoading(false);
-        return;
+        resolve(mockUsers);
       }
+    }, delay);
+
+    // Tratando o aborto da requisição (Cleanup)
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        clearTimeout(timeoutId);
+        reject(new DOMException('Aborted', 'AbortError'));
+      });
     }
-  };
+  });
+};
 
-  const handleAddNewPost = () => {
-    const newPost: Post = {
-      id: Date.now(),
-      title: `Artigo Técnico #${posts.length + 1} criado via POST`,
-      category: 'Inovação',
-      status: 'published'
+
+// --- COMPONENTE PRINCIPAL ---
+export const Modulo05Http: React.FC = () => {
+  // Estados do Laboratório
+  const [data, setData] = useState<User[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Configurações do simulador
+  const [forceError, setForceError] = useState(false);
+  const [delay, setDelay] = useState(1500);
+
+  // Função isolada de Fetch usando useCallback para não quebrar referências
+  const loadData = useCallback(async (abortController: AbortController) => {
+    setIsLoading(true);
+    setError(null);
+    setData(null);
+
+    try {
+      // Simula uma chamada API Real (fetch / axios)
+      const result = await fetchUsersFakeApi(forceError, delay, abortController.signal);
+      setData(result);
+    } catch (err: any) {
+      // Ignoramos erros do tipo 'AbortError' pois significam apenas que o usuário saiu da tela
+      if (err.name === 'AbortError') {
+        console.log('Requisição cancelada (Cleanup executado).');
+      } else {
+        setError(err.message || 'Erro desconhecido');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [forceError, delay]);
+
+  // Disparo Automático (Mounting)
+  useEffect(() => {
+    const controller = new AbortController();
+    loadData(controller);
+
+    // CLEANUP: Se o componente desmontar antes do fetch terminar, abortamos!
+    return () => {
+      controller.abort();
     };
-    setPosts(prev => [newPost, ...prev]);
-    setNetworkLogs(prev => [`[HTTP 201 Created] Novo post registrado via POST /api/posts.`, ...prev]);
-  };
+  }, [loadData]);
 
-  const handleDelete = (id: number) => {
-    setPosts(prev => prev.filter(p => p.id !== id));
-    setNetworkLogs(prev => [`[HTTP 204 No Content] Post #${id} deletado via DELETE.`, ...prev]);
-  };
 
   return (
     <div className="page-container">
       <div className="page-header">
         <div className="badge-container">
-          <span className="badge badge-primary">Fase 2: Ecossistema Reativo</span>
+          <span className="badge badge-primary">Fase 2: Intermediário</span>
           <span className="badge badge-neutral">Módulo 05</span>
         </div>
-        <h1>HTTP, Data Fetching & Resiliência</h1>
+        <h1>Comunicação HTTP & Assincronismo</h1>
         <p className="subtitle">
-          Operações CRUD, lógica de Retry com Backoff, tratamento de erros e Mock Fallback.
+          Buscando dados com Fetch/Axios, Estados de Carregamento (Loading/Error), e o temido problema de <em>Race Conditions</em> (Condição de Corrida).
         </p>
       </div>
 
-      
-
-      
-
-      
-
-      
-
-      
-    
-        
-      {/* SEÇÃO: 📖 Teoria */}
+      {/* SEÇÃO: 📖 Teoria Completa */}
       <section className="module-section">
-        <h2 className="section-title">📖 Teoria</h2>
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <h2 className="section-title">📖 Teoria Completa & Padrões Visuais</h2>
+        
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+          
+          {/* Tópico 1 */}
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
-              O Padrão Circuit Breaker & Retry Exponencial
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              📡 1. O Padrão: <code>useEffect</code> para Buscas Iniciais
             </h3>
-            <p style={{ color: '#475569', lineHeight: 1.6 }}>
-              Aplicações corporativas não devem quebrar quando a conexão cai por um segundo. A estratégia ideal implementa:
-            </p>
-            <ol style={{ marginLeft: '1.5rem', marginTop: '0.5rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <li><strong>Tentativa inicial:</strong> requisição rápida ao servidor.</li>
-              <li><strong>Retry com Backoff Exponencial:</strong> esperar 1s, depois 2s, depois 4s para não sobrecarregar o backend em recuperação.</li>
-              <li><strong>Graceful Degradation / Mock Fallback:</strong> exibir dados cacheados ou amigáveis avisando o usuário sobre a instabilidade.</li>
-            </ol>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+              <div>
+                <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  No React, componentes puros não podem realizar chamadas assíncronas de rede diretamente durante o processo de <em>Render</em>.
+                  A busca de dados (Fetch) é considerada um <strong>Efeito Colateral (Side Effect)</strong>, portanto deve ocorrer dentro de um <code>useEffect</code>.
+                </p>
+                <p style={{ color: '#475569', lineHeight: 1.6 }}>
+                  Geralmente usamos um <em>Array de Dependências vazio</em> <code>[]</code> para garantir que a busca à API aconteça apenas 1 vez (quando a tela abrir).
+                </p>
+              </div>
+              <div>
+                <img 
+                  src="https://placehold.co/600x400/e0f2fe/0369a1?text=Componente+Montou%5Cn%E2%86%93%5CnuseEffect(()+=%3E+%7B+fetch()+%7D,+%5B%5D)%5Cn%E2%86%93%5CnsetState(dados)%5Cn%E2%86%93%5CnRe-renderiza+com+Dados" 
+                  alt="Esquema do Ciclo de Fetching" 
+                  style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                />
+              </div>
+            </div>
           </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
+
+          {/* Tópico 2 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              ⏳ 2. Os 3 Estados Sagrados da UI
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+              <div style={{ order: 2 }}>
+                <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  Qualquer requisição HTTP leva tempo e tem grande risco de falhar. Um <em>Super Desenvolvedor</em> NUNCA ignora os estados intermediários. Você SEMPRE precisará de no mínimo 3 variáveis de estado (ou 1 objeto robusto):
+                </p>
+                <ul style={{ color: '#475569', lineHeight: 1.6, paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <li><strong><code>isLoading: boolean</code></strong> (Geralmente começa como `true`).</li>
+                  <li><strong><code>error: string | null</code></strong> (Armazena a mensagem se a API cair).</li>
+                  <li><strong><code>data: T | null</code></strong> (Os dados reais da API).</li>
+                </ul>
+              </div>
+              <div style={{ order: 1 }}>
+                <img 
+                  src="https://placehold.co/600x400/fef2f2/991b1b?text=Renderiza%C3%A7%C3%A3o+Condicional%5Cn%5Cnif+(loading)+return+%3CSpinner/%3E%5Cnif+(error)+return+%3CAlert/%3E%5Cn%5Cnreturn+%3CTabela+data=.../%3E" 
+                  alt="Esquema de Loading e Erro" 
+                  style={{ width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
+
+          {/* Tópico 3 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🏎️ 3. O Inimigo Silencioso: Race Conditions (Condição de Corrida)
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+              <div>
+                <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  <strong>Cenário:</strong> O usuário entra na tela "Usuário A" (Fetch API A leva 3s). Rapidamente, ele clica na tela "Usuário B" (Fetch API B leva 1s). O <em>Request B</em> chega primeiro e mostra os dados na tela. Mas... 2s depois, o <em>Request A</em> finalmente chega e sobrescreve a tela com os dados antigos!
+                </p>
+                <p style={{ color: '#475569', lineHeight: 1.6 }}>
+                  <strong>A Solução:</strong> Usar o <code>AbortController</code> na função de Cleanup do <code>useEffect</code>. Quando o componente é desmontado (ou a dependência muda), nós <em>abortamos</em> a requisição antiga.
+                </p>
+              </div>
+              <div>
+                <img 
+                  src="https://placehold.co/600x400/f0fdf4/166534?text=Cleanup+em+A%C3%A7%C3%A3o%5Cn%5Cnreturn+()+%3D%3E+%7B%5Cn++controller.abort()%5Cn%7D%5Cn%5CnImpede+dados+zumbis!" 
+                  alt="Esquema AbortController" 
+                  style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                />
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 💻 Exemplos Práticos */}
       <section className="module-section">
-        <h2 className="section-title">💻 Exemplos Práticos</h2>
+        <h2 className="section-title">💻 Como fazer no Código?</h2>
         <div className="glass-card">
           <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1rem' }}>
-            Função Resiliente de Fetch com AbortController
+            O Fetch Robusto (A Prova de Balas)
           </h3>
+          <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Usamos o <code>AbortController</code> nativo dos navegadores para cancelar requisições Axios ou Fetch!
+          </p>
           <pre>
-            <code>{`export async function fetchWithTimeout(url: string, timeout = 5000) {
+            <code>{`useEffect(() => {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
 
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(id);
-    if (!response.ok) throw new Error(\`Erro HTTP \${response.status}\`);
-    return await response.json();
-  } catch (err: any) {
-    clearTimeout(id);
-    if (err.name === 'AbortError') {
-      throw new Error('Tempo limite da requisição esgotado (Timeout)');
+  async function loadData() {
+    try {
+      // Passamos o signal pro fetch saber que pode ser cancelado
+      const res = await fetch('/api/users', { signal: controller.signal });
+      const data = await res.json();
+      setData(data);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        setError('Falha na API');
+      }
     }
-    throw err;
   }
-}`}</code>
+
+  loadData();
+
+  // Se o componente for fechado antes do fetch terminar, abortamos!
+  return () => controller.abort();
+}, []);`}</code>
           </pre>
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 🧪 Prática / Simulador */}
       <section className="module-section">
-        <h2 className="section-title">🧪 Prática / Simulador</h2>
+        <h2 className="section-title">🧪 Prática: O Laboratório de APIs</h2>
+        
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div className="glass-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-              🌐 Laboratório de Resiliência HTTP & Retry Automático
-            </h3>
-            <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Simule conexões instáveis de internet. Em caso de queda ou erro 500, o cliente tenta 3 vezes com backoff antes de alternar automaticamente para o fallback local seguro.
-            </p>
+          
+          <div className="glass-card" style={{ border: '1px solid #bae6fd', padding: 0, overflow: 'hidden' }}>
+            {/* PAINEL DE CONTROLE DA API */}
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'flex-end' }}>
+              
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '0.5rem' }}>
+                  Latência de Rede (Simulando 3G)
+                </label>
+                <select 
+                  className="input" 
+                  value={delay} 
+                  onChange={e => setDelay(Number(e.target.value))}
+                  style={{ width: '150px' }}
+                >
+                  <option value={200}>Rápido (200ms)</option>
+                  <option value={1500}>Normal (1.5s)</option>
+                  <option value={4000}>Lento (4s)</option>
+                </select>
+              </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={simulateError}
-                  onChange={e => setSimulateError(e.target.checked)}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: '42px' }}>
+                <input 
+                  type="checkbox" 
+                  id="forceError"
+                  checked={forceError}
+                  onChange={e => setForceError(e.target.checked)}
                 />
-                <span style={{ fontWeight: 600, color: simulateError ? '#dc2626' : '#475569' }}>
-                  Simular Falha de Conexão (503 Service Unavailable)
-                </span>
-              </label>
+                <label htmlFor="forceError" style={{ fontSize: '0.9rem', color: '#ef4444', fontWeight: 600, cursor: 'pointer' }}>
+                  🔥 Derrubar Servidor (Simular Erro 500)
+                </label>
+              </div>
 
-              <button
-                onClick={() => fetchWithRetry(simulateError)}
-                disabled={isLoading}
+              <button 
+                onClick={() => {
+                  const controller = new AbortController();
+                  loadData(controller);
+                }} 
                 className="btn btn-primary"
+                style={{ marginLeft: 'auto' }}
+                disabled={isLoading}
               >
-                {isLoading ? `Buscando (Tentativa ${retryCount}/3)...` : 'Executar GET /api/posts'}
+                🔄 Disparar Fetch Manual
               </button>
 
-              <button onClick={handleAddNewPost} className="btn btn-secondary">
-                + Novo Post (POST)
-              </button>
             </div>
 
-            <div className="grid-2">
-              <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-200)' }}>
-                <h4 style={{ fontWeight: 700, marginBottom: '1rem' }}>Artigos Carregados ({posts.length})</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {posts.map(p => (
-                    <div
-                      key={p.id}
-                      style={{
-                        padding: '0.75rem 1rem',
-                        background: '#ffffff',
-                        border: '1px solid var(--neutral-200)',
-                        borderRadius: 'var(--radius-sm)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#0f172a' }}>{p.title}</div>
-                        <span className="badge badge-primary" style={{ fontSize: '0.68rem', marginTop: '0.2rem' }}>{p.category}</span>
-                      </div>
-                      <button onClick={() => handleDelete(p.id)} className="btn btn-danger btn-sm">Excluir</button>
-                    </div>
-                  ))}
+            {/* A TELA RENDERIZADA */}
+            <div style={{ padding: '2.5rem', background: '#fff', minHeight: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              
+              {/* Condição 1: Carregando */}
+              {isLoading && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                  <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #f1f5f9', borderTop: '4px solid #0284c7', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                  <p style={{ color: '#64748b', fontWeight: 600, letterSpacing: '1px' }}>BAIXANDO DADOS...</p>
+                  <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                 </div>
-              </div>
+              )}
 
-              <div style={{ background: '#0f172a', color: '#e2e8f0', padding: '1.25rem', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column' }}>
-                <h4 style={{ color: '#38bdf8', fontWeight: 700, marginBottom: '0.75rem', fontSize: '0.95rem' }}>
-                  📡 Terminal de Tráfego de Rede (Logs)
-                </h4>
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
-                  {networkLogs.length === 0 ? (
-                    <span style={{ color: '#64748b' }}>Clique em "Executar GET" para iniciar...</span>
-                  ) : (
-                    networkLogs.map((log, i) => (
-                      <span key={i} style={{ color: log.includes('✅') ? '#4ade80' : log.includes('⚠️') ? '#fbbf24' : log.includes('Erro') ? '#f87171' : '#cbd5e1' }}>
-                        {log}
-                      </span>
-                    ))
-                  )}
+              {/* Condição 2: Erro */}
+              {!isLoading && error && (
+                <div style={{ background: '#fef2f2', border: '1px solid #f87171', color: '#991b1b', padding: '1.5rem', borderRadius: '8px', textAlign: 'center', maxWidth: '400px' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>💥</div>
+                  <h4 style={{ fontWeight: 800, marginBottom: '0.5rem' }}>Falha Crítica na API</h4>
+                  <p style={{ fontSize: '0.9rem' }}>{error}</p>
                 </div>
-              </div>
+              )}
+
+              {/* Condição 3: Sucesso */}
+              {!isLoading && !error && data && (
+                <div style={{ width: '100%', maxWidth: '600px' }}>
+                  <h4 style={{ fontWeight: 800, color: '#0f172a', marginBottom: '1.5rem' }}>Usuários do Sistema</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {data.map(user => (
+                      <div key={user.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                        <div>
+                          <strong style={{ display: 'block', color: '#0f172a' }}>{user.name}</strong>
+                          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{user.email}</span>
+                        </div>
+                        <span className="badge badge-primary">{user.role}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 🛡️ Boas Práticas */}
       <section className="module-section">
-        <h2 className="section-title">🛡️ Boas Práticas</h2>
+        <h2 className="section-title">🛡️ Boas Práticas & Mercado</h2>
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="alert alert-info">
+          
+          <div className="alert alert-danger">
             <div>
-              <strong>Cancelamento com AbortController:</strong> Se o usuário sai da página antes da requisição terminar, aborte o fetch no cleanup do <code>useEffect</code> para economizar recursos e evitar tentar atualizar componentes desmontados.
+              <strong>Componentes Desmontados (Memory Leaks):</strong> Se você disparar um Fetch e o usuário clicar no botão de "Voltar" (fechando a tela), a resposta da API vai tentar atualizar um <code>setState</code> de uma tela que não existe mais. Isso causa vazamento de memória. Use <code>AbortController</code> SEMPRE.
             </div>
           </div>
+
+          <div className="alert alert-success">
+            <div>
+              <strong>A Morte do useEffect para Dados:</strong> Em 2024/2026, desenvolvedores seniores raramente fazem fetch com <code>useEffect</code> puro. É extremamente recomendado pelo time do React usar bibliotecas especializadas como <strong>SWR</strong> ou <strong>React Query (TanStack Query)</strong>, que cuidam de Cache, Loading, Error, Retentativas Automáticas e Abortos sem você escrever uma linha sequer. No Módulo de Ferramentas Modernas falaremos disso!
+            </div>
+          </div>
+
         </div>
       </section>
-        
-      
-</div>
+
+    </div>
   );
 };
