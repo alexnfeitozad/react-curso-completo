@@ -55,7 +55,7 @@ export const Modulo06Formularios: React.FC = () => {
     e.preventDefault();
     const email = newsletterEmailRef.current?.value;
     if (email) {
-      alert(\`Inscrito na Newsletter com o email: \${email} (Lido diretamente do DOM!)\`);
+      alert(`Inscrito na Newsletter com o email: ${email} (Lido diretamente do DOM!)`);
       if (newsletterEmailRef.current) newsletterEmailRef.current.value = '';
     }
   };
@@ -279,13 +279,13 @@ export const Modulo06Formularios: React.FC = () => {
           
           <div className="alert alert-warning">
             <div>
-              <strong>O Famoso Erro de `undefined` a `string`:</strong> Se você esquecer de inicializar a chave do objeto no <code>useState</code> (ex: passar apenas `username` mas deixar `email` de fora), o React vai reclamar que um componente mudou de *Uncontrolled* para *Controlled* no meio da execução. Sempre inicie todos os campos com aspas vazias <code>''</code>!
+              <strong>O Famoso Erro de 'undefined' a 'string':</strong> Se você esquecer de inicializar a chave do objeto no <code>useState</code> (ex: passar apenas 'username' mas deixar 'email' de fora), o React vai reclamar que um componente mudou de *Uncontrolled* para *Controlled* no meio da execução. Sempre inicie todos os campos com aspas vazias <code>''</code>!
             </div>
           </div>
 
           <div className="alert alert-success">
             <div>
-              <strong>Mercado de Trabalho (Bibliotecas Essenciais):</strong> Ninguém em grandes empresas escreve validações manuais gigantescas ou gerencia 50 campos com `useState` puro. O padrão absoluto do mercado (e que falaremos depois) é usar o <strong>React Hook Form</strong> (que baseia-se internamente em Uncontrolled Refs para máxima performance) junto com o <strong>Zod</strong> para validação de Schemas!
+              <strong>Mercado de Trabalho (Bibliotecas Essenciais):</strong> Ninguém em grandes empresas escreve validações manuais gigantescas ou gerencia 50 campos com 'useState' puro. O padrão absoluto do mercado (e que falaremos depois) é usar o <strong>React Hook Form</strong> (que baseia-se internamente em Uncontrolled Refs para máxima performance) junto com o <strong>Zod</strong> para validação de Schemas!
             </div>
           </div>
 
