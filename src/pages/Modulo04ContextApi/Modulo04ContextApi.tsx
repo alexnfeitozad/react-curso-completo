@@ -62,7 +62,7 @@ const useThemeDispatch = () => {
 const HeaderNested = () => {
   const { isDarkMode, primaryColor } = useThemeState();
   return (
-    <div style={{ padding: '1rem', background: isDarkMode ? '#1e293b' : '#f8fafc', color: isDarkMode ? '#f8fafc' : '#0f172a', borderBottom: \`3px solid \${primaryColor}\`, transition: 'all 0.3s' }}>
+    <div style={{ padding: '1rem', background: isDarkMode ? '#1e293b' : '#f8fafc', color: isDarkMode ? '#f8fafc' : '#0f172a', borderBottom: `3px solid ${primaryColor}`, transition: 'all 0.3s' }}>
       <h3 style={{ margin: 0 }}>App Config (Camada 3)</h3>
     </div>
   );
@@ -97,8 +97,8 @@ const DashboardNested = () => {
     <div style={{ padding: '2rem', background: isDarkMode ? '#0f172a' : '#ffffff', color: isDarkMode ? '#cbd5e1' : '#334155', minHeight: '150px', transition: 'all 0.3s' }}>
       <p>Este painel está lendo dados globais profundos sem receber NENHUMA <code>prop</code> diretamente.</p>
       <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
-        <div style={{ flex: 1, height: '80px', borderRadius: '8px', background: isDarkMode ? '#1e293b' : '#f1f5f9', borderLeft: \`4px solid \${primaryColor}\` }}></div>
-        <div style={{ flex: 1, height: '80px', borderRadius: '8px', background: isDarkMode ? '#1e293b' : '#f1f5f9', borderLeft: \`4px solid \${primaryColor}\` }}></div>
+        <div style={{ flex: 1, height: '80px', borderRadius: '8px', background: isDarkMode ? '#1e293b' : '#f1f5f9', borderLeft: `4px solid ${primaryColor}` }}></div>
+        <div style={{ flex: 1, height: '80px', borderRadius: '8px', background: isDarkMode ? '#1e293b' : '#f1f5f9', borderLeft: `4px solid ${primaryColor}` }}></div>
       </div>
     </div>
   );
