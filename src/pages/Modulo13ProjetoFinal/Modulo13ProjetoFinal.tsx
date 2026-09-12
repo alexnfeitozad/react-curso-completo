@@ -1,449 +1,197 @@
-import React, { useState, useMemo } from 'react';
-import confetti from 'canvas-confetti';
+import React, { useState } from 'react';
 
-export interface CursoItem {
-  id: number;
-  titulo: string;
-  categoria: 'Frontend' | 'Backend' | 'DevOps' | 'Mobile';
-  nivel: 'Iniciante' | 'Intermediário' | 'Avançado';
-  horas: number;
-  avaliacao: number;
-  alunosInscritos: number;
-  inscrito: boolean;
-  concluido: boolean;
+// --- TIPAGENS ---
+type TaskStatus = 'TODO' | 'DOING' | 'DONE';
+
+interface Task {
+  id: string;
+  title: string;
+  status: TaskStatus;
 }
 
-const INITIAL_COURSES: CursoItem[] = [
-  {
-    id: 1,
-    titulo: 'React 19: Arquitetura Enterprise, Hooks & Zustand',
-    categoria: 'Frontend',
-    nivel: 'Avançado',
-    horas: 50,
-    avaliacao: 4.9,
-    alunosInscritos: 1480,
-    inscrito: true,
-    concluido: false
-  },
-  {
-    id: 2,
-    titulo: 'TypeScript Avançado, Generics e Padrões GoF',
-    categoria: 'Frontend',
-    nivel: 'Intermediário',
-    horas: 30,
-    avaliacao: 4.8,
-    alunosInscritos: 950,
-    inscrito: true,
-    concluido: true
-  },
-  {
-    id: 3,
-    titulo: 'Node.js, Express, Clean Arch e Microservices',
-    categoria: 'Backend',
-    nivel: 'Avançado',
-    horas: 60,
-    avaliacao: 4.9,
-    alunosInscritos: 720,
-    inscrito: false,
-    concluido: false
-  },
-  {
-    id: 4,
-    titulo: 'CI/CD com GitHub Actions, Docker e Kubernetes',
-    categoria: 'DevOps',
-    nivel: 'Iniciante',
-    horas: 25,
-    avaliacao: 4.7,
-    alunosInscritos: 1150,
-    inscrito: false,
-    concluido: false
-  },
-  {
-    id: 5,
-    titulo: 'React Native & Expo: Apps Mobile Corporativos',
-    categoria: 'Mobile',
-    nivel: 'Intermediário',
-    horas: 42,
-    avaliacao: 4.8,
-    alunosInscritos: 810,
-    inscrito: false,
-    concluido: false
-  }
-];
+// --- SUB-COMPONENTES (Design Patterns: Presentational / Compound) ---
 
+// 1. O Cartão de Tarefa (Componente Burro / Presentational)
+const TaskCard = ({ task, onMove, onDelete }: { task: Task; onMove: (id: string, newStatus: TaskStatus) => void; onDelete: (id: string) => void }) => {
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#1e293b', lineHeight: 1.4 }}>{task.title}</h4>
+        <button onClick={() => onDelete(task.id)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', fontSize: '1.2rem', lineHeight: 1 }} title="Excluir">
+          &times;
+        </button>
+      </div>
+      
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        {task.status !== 'TODO' && (
+          <button onClick={() => onMove(task.id, task.status === 'DONE' ? 'DOING' : 'TODO')} className="btn btn-secondary btn-sm" style={{ flex: 1, padding: '0.25rem' }}>
+            ← Voltar
+          </button>
+        )}
+        {task.status !== 'DONE' && (
+          <button onClick={() => onMove(task.id, task.status === 'TODO' ? 'DOING' : 'DONE')} className="btn btn-primary btn-sm" style={{ flex: 1, padding: '0.25rem' }}>
+            Avançar →
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// 2. A Coluna do Quadro (Composição)
+const KanbanColumn = ({ title, color, children }: { title: string; color: string; children: React.ReactNode }) => {
+  return (
+    <div style={{ flex: 1, background: '#f8fafc', borderRadius: '12px', padding: '1rem', borderTop: `4px solid ${color}`, display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '280px' }}>
+      <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#334155', display: 'flex', justifyContent: 'space-between' }}>
+        {title}
+        <span style={{ background: '#e2e8f0', padding: '0.15rem 0.5rem', borderRadius: '12px', fontSize: '0.8rem', color: '#64748b' }}>
+          {React.Children.count(children)}
+        </span>
+      </h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+
+// --- COMPONENTE PRINCIPAL (O Quadro Completo) ---
 export const Modulo13ProjetoFinal: React.FC = () => {
-  const [cursos, setCursos] = useState<CursoItem[]>(INITIAL_COURSES);
+  // Estado Centralizado (Poderia estar no Zustand, mas mantemos no useState para simplicidade didática)
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: '1', title: 'Estudar React Hooks (Módulo 2)', status: 'DONE' },
+    { id: '2', title: 'Entender Render Props (Módulo 3)', status: 'DONE' },
+    { id: '3', title: 'Integrar Context API (Módulo 4)', status: 'DOING' },
+    { id: '4', title: 'Dominar Zustand (Módulo 9)', status: 'TODO' },
+    { id: '5', title: 'Fazer o Projeto Final 🚀', status: 'TODO' },
+  ]);
 
-  // Filtros
-  const [termoBusca, setTermoBusca] = useState('');
-  const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
-  const [apenasInscritos, setApenasInscritos] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
 
-  // Toast e Modal
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [modalAberto, setModalAberto] = useState(false);
-
-  // Formulário do Modal
-  const [novoTitulo, setNovoTitulo] = useState('');
-  const [novaCategoria, setNovaCategoria] = useState<'Frontend' | 'Backend' | 'DevOps' | 'Mobile'>('Frontend');
-  const [novoNivel, setNovoNivel] = useState<'Iniciante' | 'Intermediário' | 'Avançado'>('Intermediário');
-  const [novasHoras, setNovasHoras] = useState(30);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3500);
-  };
-
-  // KPIs Derivados (Computed)
-  const kpis = useMemo(() => {
-    const total = cursos.length;
-    const inscritos = cursos.filter(c => c.inscrito).length;
-    const concluidos = cursos.filter(c => c.concluido).length;
-    const horasEstudo = cursos.filter(c => c.inscrito).reduce((acc, c) => acc + c.horas, 0);
-    const progresso = inscritos > 0 ? Math.round((concluidos / inscritos) * 100) : 0;
-
-    return { total, inscritos, concluidos, horasEstudo, progresso };
-  }, [cursos]);
-
-  // Cursos Filtrados
-  const cursosFiltrados = useMemo(() => {
-    return cursos.filter(curso => {
-      const matchBusca = curso.titulo.toLowerCase().includes(termoBusca.toLowerCase().trim());
-      const matchCategoria = categoriaFiltro === 'Todas' || curso.categoria === categoriaFiltro;
-      const matchInscrito = !apenasInscritos || curso.inscrito;
-      return matchBusca && matchCategoria && matchInscrito;
-    });
-  }, [cursos, termoBusca, categoriaFiltro, apenasInscritos]);
-
-  const toggleInscricao = (id: number) => {
-    setCursos(prev =>
-      prev.map(c => {
-        if (c.id === id) {
-          const novoStatus = !c.inscrito;
-          if (novoStatus) {
-            confetti({ particleCount: 60, spread: 60 });
-            showToast(`🎉 Matrícula confirmada no curso: "${c.titulo}"`);
-          } else {
-            showToast(`Inscrição cancelada no curso: "${c.titulo}"`);
-          }
-          return {
-            ...c,
-            inscrito: novoStatus,
-            alunosInscritos: novoStatus ? c.alunosInscritos + 1 : c.alunosInscritos - 1,
-            concluido: novoStatus ? c.concluido : false
-          };
-        }
-        return c;
-      })
-    );
-  };
-
-  const toggleConclusao = (id: number) => {
-    setCursos(prev =>
-      prev.map(c => {
-        if (c.id === id) {
-          const novoStatus = !c.concluido;
-          if (novoStatus) {
-            confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 } });
-            showToast(`🏆 Parabéns! Você concluiu o curso "${c.titulo}"!`);
-          }
-          return { ...c, concluido: novoStatus };
-        }
-        return c;
-      })
-    );
-  };
-
-  const handleCriarCurso = (e: React.FormEvent) => {
+  // Ações de Negócio
+  const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!novoTitulo.trim()) return;
-
-    const novoCurso: CursoItem = {
-      id: Date.now(),
-      titulo: novoTitulo.trim(),
-      categoria: novaCategoria,
-      nivel: novoNivel,
-      horas: novasHoras,
-      avaliacao: 5.0,
-      alunosInscritos: 1,
-      inscrito: true,
-      concluido: false
+    if (!newTaskTitle.trim()) return;
+    
+    const newTask: Task = {
+      id: Date.now().toString(),
+      title: newTaskTitle,
+      status: 'TODO'
     };
+    
+    setTasks(prev => [newTask, ...prev]);
+    setNewTaskTitle('');
+  };
 
-    setCursos(prev => [novoCurso, ...prev]);
-    setModalAberto(false);
-    setNovoTitulo('');
-    confetti({ particleCount: 50, spread: 50 });
-    showToast(`✨ Novo curso "${novoCurso.titulo}" publicado com sucesso!`);
+  const handleMoveTask = (id: string, newStatus: TaskStatus) => {
+    setTasks(prev => prev.map(task => task.id === id ? { ...task, status: newStatus } : task));
+  };
+
+  const handleDeleteTask = (id: string) => {
+    setTasks(prev => prev.filter(task => task.id !== id));
   };
 
   return (
     <div className="page-container">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '2rem',
-            right: '2rem',
-            zIndex: 9999,
-            background: '#0f172a',
-            color: '#ffffff',
-            padding: '1rem 1.5rem',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            border: '1px solid rgba(255,255,255,0.1)'
-          }}
-        >
-          {toastMessage}
+      <div className="page-header" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%)', color: '#fff', borderRadius: '16px', padding: '3rem 2rem', marginBottom: '3rem' }}>
+        <div className="badge-container" style={{ marginBottom: '1rem' }}>
+          <span className="badge" style={{ background: '#fff', color: '#4f46e5' }}>Fase 4: Maestria</span>
+          <span className="badge" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}>Módulo 13 (FIM)</span>
         </div>
-      )}
-
-      <div className="page-header">
-        <div className="badge-container">
-          <span className="badge badge-primary">Fase 3: Nível Arquiteto</span>
-          <span className="badge badge-warning">Módulo 13 • Projeto Integrador</span>
-        </div>
-        <h1>DevLearn Pro | Portal Integrador Enterprise</h1>
-        <p className="subtitle">
-          Aplicação SPA completa em React 19 unindo Hooks, Reatividade, Formulários, KPIs, Modais e Toasts.
+        <h1 style={{ color: '#fff', margin: 0, fontSize: '2.5rem', fontWeight: 900, textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+          Projeto Final: Masterclass
+        </h1>
+        <p style={{ color: '#e0f2fe', fontSize: '1.2rem', marginTop: '1rem', opacity: 0.9 }}>
+          A junção de tudo que aprendemos. Do básico ao avançado, encapsulado em uma aplicação real de Gestão de Tarefas (Mini-Kanban).
         </p>
       </div>
 
-      {/* KPI Dashboard */}
-      <div className="stats-grid" style={{ marginBottom: '2rem' }}>
-        <div className="stat-card">
-          <span className="stat-value">{kpis.total}</span>
-          <span className="stat-label">Cursos Disponíveis</span>
-          <span className="stat-detail">Catálogo corporativo</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value" style={{ color: '#0284c7' }}>{kpis.inscritos}</span>
-          <span className="stat-label">Minhas Matrículas</span>
-          <span className="stat-detail">Cursos em andamento</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value" style={{ color: '#16a34a' }}>{kpis.concluidos}</span>
-          <span className="stat-label">Cursos Concluídos</span>
-          <span className="stat-detail">Certificados emitidos</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value" style={{ color: '#8b5cf6' }}>{kpis.progresso}%</span>
-          <span className="stat-label">Taxa de Conclusão</span>
-          <span className="stat-detail">{kpis.horasEstudo} horas de carga horária</span>
-        </div>
-      </div>
-
-      {/* Barra de Filtros & Ações */}
-      <div className="glass-card" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: '260px' }}>
-            <input
-              type="text"
-              className="input"
-              placeholder="Buscar curso por título ou tecnologia..."
-              value={termoBusca}
-              onChange={e => setTermoBusca(e.target.value)}
-            />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <select
-              className="input"
-              style={{ width: 'auto' }}
-              value={categoriaFiltro}
-              onChange={e => setCategoriaFiltro(e.target.value)}
-            >
-              <option value="Todas">Todas as Categorias</option>
-              <option value="Frontend">Frontend</option>
-              <option value="Backend">Backend</option>
-              <option value="DevOps">DevOps</option>
-              <option value="Mobile">Mobile</option>
-            </select>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 600 }}>
-              <input
-                type="checkbox"
-                checked={apenasInscritos}
-                onChange={e => setApenasInscritos(e.target.checked)}
+      {/* SEÇÃO: 📖 Teoria Completa */}
+      <section className="module-section">
+        <h2 className="section-title">📖 O Que Estamos Consolidando Aqui?</h2>
+        
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
+            <div>
+              <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                Chegamos ao fim da jornada! Neste simulador final, nós não usamos nenhuma biblioteca de terceiros (sem drag and drop complexo) para provar o poder do React puro.
+              </p>
+              <ul style={{ color: '#475569', lineHeight: 1.6, paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <li><strong>JSX e Componentização (Mod 1 e 3):</strong> Separamos a <code>KanbanColumn</code> do <code>TaskCard</code>.</li>
+                <li><strong>Eventos e Estado (Mod 2):</strong> O array principal de tarefas dita exatamente o que é renderizado.</li>
+                <li><strong>Formulários Controlados (Mod 6):</strong> O input de Nova Tarefa é amarrado 100% ao estado.</li>
+                <li><strong>Separação de Responsabilidades (Mod 12):</strong> O <code>TaskCard</code> não sabe como atualizar ou apagar a si mesmo. Ele recebe funções (callbacks) do componente Pai!</li>
+              </ul>
+            </div>
+            <div>
+              <img 
+                src="https://placehold.co/600x400/f8fafc/0f172a?text=%5B+Quadro+Kanban+%5D%5Cn%5CnInput+(Controlled)%5Cn%E2%86%93%5CnState+Array%5Cn%E2%86%93%5CnColunas+(Children)%5Cn%E2%86%93%5CnCart%C3%B5es+(Dumb+Components)" 
+                alt="Arquitetura do Kanban" 
+                style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}
               />
-              Apenas Meus Cursos
-            </label>
+            </div>
+          </div>
 
-            <button onClick={() => setModalAberto(true)} className="btn btn-primary">
-              + Cadastrar Curso
+        </div>
+      </section>
+
+      {/* SEÇÃO: 🧪 Prática / Simulador (O Kanban Final) */}
+      <section className="module-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
+          <h2 className="section-title" style={{ margin: 0 }}>🚀 O Quadro Kanban (Agile)</h2>
+          
+          {/* Formulário de Nova Tarefa */}
+          <form onSubmit={handleAddTask} style={{ display: 'flex', gap: '0.5rem' }}>
+            <input 
+              type="text" 
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              placeholder="Ex: Aprender Next.js..."
+              className="input"
+              style={{ minWidth: '250px' }}
+            />
+            <button type="submit" className="btn btn-primary" disabled={!newTaskTitle.trim()}>
+              + Adicionar
             </button>
-          </div>
+          </form>
         </div>
+        
+        {/* O Board */}
+        <div style={{ display: 'flex', gap: '1.5rem', overflowX: 'auto', paddingBottom: '1rem' }}>
+          
+          <KanbanColumn title="A Fazer (To Do)" color="#94a3b8">
+            {tasks.filter(t => t.status === 'TODO').map(task => (
+              <TaskCard key={task.id} task={task} onMove={handleMoveTask} onDelete={handleDeleteTask} />
+            ))}
+          </KanbanColumn>
+
+          <KanbanColumn title="Em Progresso (Doing)" color="#3b82f6">
+            {tasks.filter(t => t.status === 'DOING').map(task => (
+              <TaskCard key={task.id} task={task} onMove={handleMoveTask} onDelete={handleDeleteTask} />
+            ))}
+          </KanbanColumn>
+
+          <KanbanColumn title="Concluído (Done)" color="#22c55e">
+            {tasks.filter(t => t.status === 'DONE').map(task => (
+              <TaskCard key={task.id} task={task} onMove={handleMoveTask} onDelete={handleDeleteTask} />
+            ))}
+          </KanbanColumn>
+
+        </div>
+      </section>
+
+      {/* FOOTER DA MASTERCLASS */}
+      <div style={{ marginTop: '4rem', textAlign: 'center', padding: '3rem', background: '#0f172a', color: '#fff', borderRadius: '16px' }}>
+        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎓</div>
+        <h2 style={{ margin: '0 0 1rem 0', color: '#38bdf8' }}>Parabéns! Você concluiu a Masterclass de React.</h2>
+        <p style={{ color: '#94a3b8', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
+          De Fundamentos a Zustand, passando por WebSockets, Hooks avançados e Testes Automatizados.
+          Você está pronto para encarar qualquer desafio de Front-End no mercado de trabalho global.
+        </p>
       </div>
 
-      {/* Grid de Cursos */}
-      <div className="modules-grid">
-        {cursosFiltrados.length === 0 ? (
-          <div style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-            Nenhum curso encontrado com os filtros selecionados.
-          </div>
-        ) : (
-          cursosFiltrados.map(curso => (
-            <div key={curso.id} className="module-card" style={{ cursor: 'default' }}>
-              <div className="module-card-top">
-                <span className="badge badge-primary">{curso.categoria}</span>
-                <span className="level-chip" data-level={curso.nivel}>{curso.nivel}</span>
-              </div>
-
-              <h4 className="module-card-title">{curso.titulo}</h4>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>
-                <span>⏱️ {curso.horas}h</span>
-                <span>⭐ {curso.avaliacao}</span>
-                <span>👥 {curso.alunosInscritos.toLocaleString()} alunos</span>
-              </div>
-
-              <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid #f1f5f9', paddingTop: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => toggleInscricao(curso.id)}
-                    className={`btn btn-sm ${curso.inscrito ? 'btn-secondary' : 'btn-primary'}`}
-                    style={{ flex: 1 }}
-                  >
-                    {curso.inscrito ? 'Cancelar Matrícula' : 'Matricular-se'}
-                  </button>
-
-                  {curso.inscrito && (
-                    <button
-                      onClick={() => toggleConclusao(curso.id)}
-                      className={`btn btn-sm ${curso.concluido ? 'btn-success' : 'btn-secondary'}`}
-                    >
-                      {curso.concluido ? '✓ Concluído' : 'Marcar Concluído'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Modal de Cadastro */}
-      {modalAberto && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10000,
-            padding: '1rem'
-          }}
-          onClick={() => setModalAberto(false)}
-        >
-          <div
-            className="glass-card"
-            style={{ width: '100%', maxWidth: '520px', background: '#ffffff' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
-                Cadastrar Novo Curso no DevLearn Pro
-              </h3>
-              <button
-                onClick={() => setModalAberto(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#94a3b8' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCriarCurso} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.3rem' }}>
-                  Título do Curso:
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Ex: GraphQL com Apollo e React 19"
-                  value={novoTitulo}
-                  onChange={e => setNovoTitulo(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.3rem' }}>
-                    Categoria:
-                  </label>
-                  <select
-                    className="input"
-                    value={novaCategoria}
-                    onChange={e => setNovaCategoria(e.target.value as any)}
-                  >
-                    <option value="Frontend">Frontend</option>
-                    <option value="Backend">Backend</option>
-                    <option value="DevOps">DevOps</option>
-                    <option value="Mobile">Mobile</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.3rem' }}>
-                    Nível:
-                  </label>
-                  <select
-                    className="input"
-                    value={novoNivel}
-                    onChange={e => setNovoNivel(e.target.value as any)}
-                  >
-                    <option value="Iniciante">Iniciante</option>
-                    <option value="Intermediário">Intermediário</option>
-                    <option value="Avançado">Avançado</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.3rem' }}>
-                  Carga Horária (Horas):
-                </label>
-                <input
-                  type="number"
-                  className="input"
-                  value={novasHoras}
-                  onChange={e => setNovasHoras(Number(e.target.value))}
-                  min="5"
-                  max="200"
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setModalAberto(false)} className="btn btn-secondary">
-                  Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Publicar Curso
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    
-        
-        
-        
-        
-      
-</div>
+    </div>
   );
 };
