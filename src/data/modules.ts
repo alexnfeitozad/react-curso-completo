@@ -1,0 +1,160 @@
+import type { CursoModulo } from '../types/course';
+
+export const COURSE_MODULES: CursoModulo[] = [
+  {
+    id: 'modulo-01-fundamentos-react',
+    number: '01',
+    phase: 1,
+    phaseName: 'Fase 1: Base dos Componentes',
+    title: 'Módulo 1: Fundamentos do React 19',
+    icon: '⚛️',
+    level: 'Iniciante',
+    description: 'Virtual DOM, JSX, Props, Imutabilidade e Árvore de Elementos',
+    shortDesc: 'Aprenda como o React funciona por baixo do capô, JSX avançado e imutabilidade.',
+    tags: ['Virtual DOM', 'JSX Moderno', 'Props & Imutabilidade']
+  },
+  {
+    id: 'modulo-02-hooks-essenciais',
+    number: '02',
+    phase: 1,
+    phaseName: 'Fase 1: Base dos Componentes',
+    title: 'Módulo 2: Hooks Essenciais & Lifecycle',
+    icon: '🪝',
+    level: 'Iniciante',
+    description: 'useState, useEffect, useRef, ciclo de vida e controle de re-renderizações',
+    shortDesc: 'Controle de estado, efeitos colaterais e ciclo de vida moderno sem classes.',
+    tags: ['useState', 'useEffect', 'useRef', 'Lifecycle']
+  },
+  {
+    id: 'modulo-03-composicao-hooks',
+    number: '03',
+    phase: 1,
+    phaseName: 'Fase 1: Base dos Componentes',
+    title: 'Módulo 3: Composição & Custom Hooks',
+    icon: '🧩',
+    level: 'Iniciante',
+    description: 'Compound components, projeção via children e criação de Custom Hooks',
+    shortDesc: 'Padrões de composição profissional e abstração de lógica em hooks reutilizáveis.',
+    tags: ['Compound Components', 'Custom Hooks', 'Children Props']
+  },
+  {
+    id: 'modulo-04-context-api',
+    number: '04',
+    phase: 2,
+    phaseName: 'Fase 2: Ecossistema Reativo',
+    title: 'Módulo 4: Context API & Injeção de Estado',
+    icon: '🌐',
+    level: 'Intermediário',
+    description: 'Injeção de dependência e gerenciamento de estado global sem prop drilling',
+    shortDesc: 'Compartilhamento de contexto de tema e usuário com otimização contra re-renders.',
+    tags: ['Context API', 'useContext', 'State Providers']
+  },
+  {
+    id: 'modulo-05-http-fetching',
+    number: '05',
+    phase: 2,
+    phaseName: 'Fase 2: Ecossistema Reativo',
+    title: 'Módulo 5: HTTP, Data Fetching & Resiliência',
+    icon: '📡',
+    level: 'Intermediário',
+    description: 'CRUD com Fetch, retry automático, tratamento de erros e fallback mock',
+    shortDesc: 'Comunicação resiliente com APIs REST, debounce, retry exponencial e fallbacks.',
+    tags: ['Fetch API', 'Retry Logic', 'Error Boundaries', 'Mock Fallback']
+  },
+  {
+    id: 'modulo-06-formularios-zod',
+    number: '06',
+    phase: 2,
+    phaseName: 'Fase 2: Ecossistema Reativo',
+    title: 'Módulo 6: Formulários Reativos & Validação Zod',
+    icon: '📝',
+    level: 'Intermediário',
+    description: 'Formulários controlados e não-controlados, campos dinâmicos e validação',
+    shortDesc: 'Construção de formulários corporativos dinâmicos com validação de schemas em tempo real.',
+    tags: ['Reactive Forms', 'Array Dinâmico', 'Validação Custom']
+  },
+  {
+    id: 'modulo-07-routing-guards',
+    number: '07',
+    phase: 2,
+    phaseName: 'Fase 2: Ecossistema Reativo',
+    title: 'Módulo 7: Roteamento Avançado & Guards',
+    icon: '🧭',
+    level: 'Intermediário',
+    description: 'React Router, rotas protegidas (Guards), query params e rotas dinâmicas',
+    shortDesc: 'Navegação declarativa com simulador interativo de proteção de rotas e autenticação.',
+    tags: ['React Router', 'Route Guards', 'Query & URL Params']
+  },
+  {
+    id: 'modulo-08-reatividade-streams',
+    number: '08',
+    phase: 2,
+    phaseName: 'Fase 2: Ecossistema Reativo',
+    title: 'Módulo 8: Programação Reativa & Streams',
+    icon: '⚡',
+    level: 'Avançado',
+    description: 'Event streams, debounceTime, pipelines assíncronos e monitor visual',
+    shortDesc: 'Domínio de fluxos assíncronos de dados e monitor de eventos em tempo real.',
+    tags: ['Event Streams', 'Debounce & Throttle', 'Async Pipelines']
+  },
+  {
+    id: 'modulo-09-state-zustand',
+    number: '09',
+    phase: 2,
+    phaseName: 'Fase 2: Ecossistema Reativo',
+    title: 'Módulo 9: State Management com Zustand',
+    icon: '🐻',
+    level: 'Avançado',
+    description: 'Gerenciamento de estado previsível de alta performance sem boilerplate',
+    shortDesc: 'Implementação de store completa de carrinho com seletores e estado derivado.',
+    tags: ['Zustand Store', 'Computed Selectors', 'Mini-Store']
+  },
+  {
+    id: 'modulo-10-testes-vitest',
+    number: '10',
+    phase: 3,
+    phaseName: 'Fase 3: Nível Arquiteto',
+    title: 'Módulo 10: Testes com Vitest & Testing Library',
+    icon: '🧪',
+    level: 'Avançado',
+    description: 'Testes unitários e de integração de componentes, hooks e mocks',
+    shortDesc: 'Simulador visual da pipeline de testes e specs reais executadas no Vitest.',
+    tags: ['Vitest', 'Testing Library', 'Mocks & Spies']
+  },
+  {
+    id: 'modulo-11-performance',
+    number: '11',
+    phase: 3,
+    phaseName: 'Fase 3: Nível Arquiteto',
+    title: 'Módulo 11: Performance & Otimização',
+    icon: '🚀',
+    level: 'Avançado',
+    description: 'React.memo, useMemo, useCallback, Lazy loading e Suspense',
+    shortDesc: 'Evitando re-renders inúteis e aplicando divisão de código inteligente.',
+    tags: ['React.memo', 'useMemo', 'useCallback', 'Suspense & Lazy']
+  },
+  {
+    id: 'modulo-12-patterns-solid',
+    number: '12',
+    phase: 3,
+    phaseName: 'Fase 3: Nível Arquiteto',
+    title: 'Módulo 12: Design Patterns & Princípios SOLID',
+    icon: '🏛️',
+    level: 'Avançado',
+    description: 'Padrão Strategy (gateways de pagamento), 5 princípios SOLID e Clean Arch',
+    shortDesc: 'Arquitetura limpa para frontend, desacoplamento e extensibilidade sustentável.',
+    tags: ['Strategy Pattern', 'SOLID Principles', 'Clean Architecture']
+  },
+  {
+    id: 'modulo-13-projeto-final',
+    number: '13',
+    phase: 3,
+    phaseName: 'Fase 3: Nível Arquiteto',
+    title: 'Módulo 13: Projeto Integrador DevLearn Pro',
+    icon: '🏆',
+    level: 'Master',
+    description: 'Plataforma completa conectando Estado, Forms, Modais, KPIs, Filtros e Toasts',
+    shortDesc: 'Aplicação SPA completa pronta para produção unindo todos os conceitos.',
+    tags: ['DevLearn Pro', 'CRUD Completo', 'KPIs Reativos', 'Toasts & Modais']
+  }
+];
