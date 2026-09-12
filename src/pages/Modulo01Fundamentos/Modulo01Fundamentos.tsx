@@ -1,61 +1,65 @@
 import React, { useState } from 'react';
 
+// --- SUB-COMPONENTES PARA O LABORATÓRIO PRÁTICO ---
+// 1. Componente Puro com Props
+interface AvatarProps {
+  url: string;
+  alt: string;
+  size?: number;
+}
+const Avatar: React.FC<AvatarProps> = ({ url, alt, size = 50 }) => {
+  return (
+    <img 
+      src={url} 
+      alt={alt} 
+      style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary-500)' }} 
+    />
+  );
+};
+
+// 2. Componente com Renderização Condicional e Listas
+interface SkillProps {
+  name: string;
+  isImportant?: boolean;
+}
+const SkillTag: React.FC<SkillProps> = ({ name, isImportant }) => {
+  return (
+    <span className={`badge ${isImportant ? 'badge-primary' : 'badge-neutral'}`}>
+      {name} {isImportant && '⭐'}
+    </span>
+  );
+};
+
+// --- COMPONENTE PRINCIPAL ---
 export const Modulo01Fundamentos: React.FC = () => {
   
-  // Interactive state for Immutability Lab
-  const [userProfile, setUserProfile] = useState({
-    name: 'Ana Silva',
-    role: 'Engenheira Frontend',
-    skills: ['JavaScript', 'TypeScript', 'React'],
-    stats: { commits: 42, score: 98 }
-  });
-  const [newSkill, setNewSkill] = useState('');
-  const [historyLog, setHistoryLog] = useState<string[]>(['Estado inicial carregado com sucesso.']);
-
-  // Virtual DOM Visualizer State
-  const [counter, setCounter] = useState(0);
-  const [items, setItems] = useState([
-    { id: '1', label: 'Compreender JSX como React.createElement()' },
-    { id: '2', label: 'Garantir imutabilidade ao atualizar estado' },
-    { id: '3', label: 'Compreender reconciliação e o algoritmo Fiber' }
+  // Estado para o Simulador
+  const [userName, setUserName] = useState('Super Dev');
+  const [showAvatar, setShowAvatar] = useState(true);
+  const [skills, setSkills] = useState([
+    { id: '1', name: 'React', isImportant: true },
+    { id: '2', name: 'TypeScript', isImportant: true },
+    { id: '3', name: 'CSS', isImportant: false }
   ]);
-  const [newItemText, setNewItemText] = useState('');
+  const [newSkill, setNewSkill] = useState('');
+  const [isImportant, setIsImportant] = useState(false);
 
   const handleAddSkill = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSkill.trim()) return;
-
-    // Prática correta de imutabilidade: novo array com spread operator
-    setUserProfile(prev => ({
-      ...prev,
-      skills: [...prev.skills, newSkill.trim()]
-    }));
-    setHistoryLog(prev => [
-      `[Imutabilidade OK] Nova skill adicionada: "${newSkill.trim()}" gerando nova referência de memória.`,
-      ...prev.slice(0, 7)
+    
+    // Imutabilidade: criando novo array e adicionando novo objeto
+    setSkills([
+      ...skills, 
+      { id: String(Date.now()), name: newSkill.trim(), isImportant }
     ]);
     setNewSkill('');
+    setIsImportant(false);
   };
 
-  const handleIncrementCommits = () => {
-    setUserProfile(prev => ({
-      ...prev,
-      stats: { ...prev.stats, commits: prev.stats.commits + 1 }
-    }));
-    setHistoryLog(prev => [
-      `[Imutabilidade OK] Commits incrementados para ${userProfile.stats.commits + 1}.`,
-      ...prev.slice(0, 7)
-    ]);
-  };
-
-  const handleAddItem = () => {
-    if (!newItemText.trim()) return;
-    setItems(prev => [...prev, { id: String(Date.now()), label: newItemText.trim() }]);
-    setNewItemText('');
-  };
-
-  const handleRemoveItem = (id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+  const handleRemoveSkill = (idToRemove: string) => {
+    // Imutabilidade: filtrando o array existente
+    setSkills(skills.filter(s => s.id !== idToRemove));
   };
 
   return (
@@ -65,255 +69,296 @@ export const Modulo01Fundamentos: React.FC = () => {
           <span className="badge badge-primary">Fase 1: Base dos Componentes</span>
           <span className="badge badge-neutral">Módulo 01</span>
         </div>
-        <h1>Fundamentos do React 19</h1>
+        <h1>Fundamentos: Descrevendo a UI</h1>
         <p className="subtitle">
-          Virtual DOM, JSX Desmistificado, Props, Imutabilidade e Árvore de Elementos.
+          De Componentes e JSX até Props, Renderização Condicional e Listas. A Masterclass baseada na documentação oficial.
         </p>
       </div>
 
-      
-
-      
-
-      
-
-      
-
-      
-    
-        
-      {/* SEÇÃO: 📖 Teoria */}
+      {/* SEÇÃO: 📖 Teoria (Masterclass React.dev) */}
       <section className="module-section">
-        <h2 className="section-title">📖 Teoria</h2>
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <h2 className="section-title">📖 Teoria Completa (React.dev)</h2>
+        
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Tópico 1 */}
           <div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
-              1. O que é o JSX por baixo dos panos?
+              1. Seu Primeiro Componente
             </h3>
-            <p style={{ color: '#475569', lineHeight: 1.6 }}>
-              JSX não é HTML. É uma extensão sintática para JavaScript. Quando você escreve{' '}
-              <code>&lt;button className="btn"&gt;Clique&lt;/button&gt;</code>, o compilador (Babel/Vite) transforma isso em uma chamada:
+            <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '0.5rem' }}>
+              Aplicações React são construídas a partir de peças isoladas de UI chamadas <strong>componentes</strong>. Um componente React é apenas uma função JavaScript pura que retorna marcação (markup).
             </p>
-            <pre style={{ marginTop: '0.5rem' }}>
-              <code>{`// Transformação do JSX:
-React.createElement('button', { className: 'btn' }, 'Clique');
-
-// No React 19 com jsx-runtime:
-import { jsx as _jsx } from 'react/jsx-runtime';
-_jsx('button', { className: 'btn', children: 'Clique' });`}</code>
+            <pre>
+              <code>{`export function Profile() {
+  return <img src="https://i.pravatar.cc/150" alt="Super Dev" />;
+}`}</code>
             </pre>
           </div>
 
+          {/* Tópico 2 */}
           <div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
-              2. O Ciclo de Reconciliação (Fiber Architecture)
+              2. Escrevendo Marcação com JSX
             </h3>
-            <p style={{ color: '#475569', lineHeight: 1.6 }}>
-              A atualização no React ocorre em duas fases fundamentais:
+            <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '0.5rem' }}>
+              JSX é uma extensão de sintaxe que permite escrever HTML dentro do JavaScript. Ele possui 3 regras rígidas:
             </p>
-            <ul style={{ marginLeft: '1.5rem', marginTop: '0.5rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <li><strong>Fase de Render (Diffing):</strong> O React chama seus componentes, constrói a nova árvore de elementos e calcula as diferenças em relação à árvore anterior. Esta fase é assíncrona e pura.</li>
-              <li><strong>Fase de Commit:</strong> O React aplica apenas as mutações estritamente necessárias no DOM real do navegador de forma síncrona.</li>
+            <ul style={{ marginLeft: '1.5rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <li><strong>Retorne um único elemento raiz:</strong> Envolva múltiplas tags com uma <code>&lt;div&gt;</code> ou fragmento <code>&lt;&gt;...&lt;/&gt;</code>.</li>
+              <li><strong>Feche todas as tags:</strong> Tags como <code>&lt;img&gt;</code> precisam virar <code>&lt;img /&gt;</code>.</li>
+              <li><strong>Use camelCase para maioria das coisas:</strong> Em vez de <code>class</code>, use <code>className</code>. Em vez de <code>onclick</code>, use <code>onClick</code>.</li>
             </ul>
           </div>
+
+          {/* Tópico 3 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
+              3. JavaScript in JSX (As Chaves <code>{'{ }'}</code>)
+            </h3>
+            <p style={{ color: '#475569', lineHeight: 1.6 }}>
+              Para colocar variáveis, cálculos ou funções dentro do HTML (JSX), você deve usar as chaves <code>{'{ }'}</code>. É como abrir uma "janela" de volta para o JavaScript.
+              Se quiser passar um objeto CSS inline, você precisará de duas chaves: <code>style={'{'}{'{'} backgroundColor: 'red' {'}'}{'}'}</code>.
+            </p>
+          </div>
+
+          {/* Tópico 4 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
+              4. Passando Props para Componentes
+            </h3>
+            <p style={{ color: '#475569', lineHeight: 1.6, marginBottom: '0.5rem' }}>
+              Componentes se comunicam passando dados de pai para filho através de <strong>Props</strong> (propriedades). Pense nelas como argumentos de função.
+            </p>
+            <pre>
+              <code>{`// Pai
+<Avatar person={{ name: 'Ana', imageId: '1bX5QH6' }} size={100} />
+
+// Filho
+function Avatar({ person, size }) {
+  // Acesso desestruturado às props
+}`}</code>
+            </pre>
+          </div>
+
+          {/* Tópico 5 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
+              5. Renderização Condicional
+            </h3>
+            <p style={{ color: '#475569', lineHeight: 1.6 }}>
+              Não existe uma sintaxe especial de "if" no JSX. Você usa JavaScript puro!
+            </p>
+            <ul style={{ marginLeft: '1.5rem', marginTop: '0.5rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <li>Se for retorno total: <code>if (isPacked) return null;</code></li>
+              <li>Operador Ternário: <code>isPacked ? &lt;Check/&gt; : &lt;Cross/&gt;</code></li>
+              <li>Operador Lógico AND: <code>isPacked && &lt;Check/&gt;</code></li>
+            </ul>
+          </div>
+
+          {/* Tópico 6 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
+              6. Renderizando Listas e as "Keys"
+            </h3>
+            <p style={{ color: '#475569', lineHeight: 1.6 }}>
+              Para renderizar coleções de dados, usamos o método <code>.map()</code> do JavaScript.
+              <br/>
+              <strong>Regra de Ouro:</strong> Cada item retornado pelo map DEVE ter uma propriedade <code>key</code> única (como um ID do banco de dados). Isso é vital para a engine do React (Reconciliação) saber exatamente qual item foi deletado, movido ou adicionado, sem destruir a árvore inteira.
+            </p>
+          </div>
+
+          {/* Tópico 7 */}
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
+              7. Componentes Puros (Manter Componentes Puros)
+            </h3>
+            <p style={{ color: '#475569', lineHeight: 1.6 }}>
+              Um componente React <strong>deve ser uma Função Pura</strong>. Isso significa:
+              <br/>- Ele cuida da sua própria vida (não muda objetos que existiam antes dele ser chamado).
+              <br/>- Dada a mesma entrada (mesmas props e state), ele DEVE retornar sempre o mesmo JSX.
+              <br/>- Mutações (como alterar uma variável externa) durante a renderização causarão bugs severos.
+            </p>
+          </div>
+
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 💻 Exemplos Práticos */}
       <section className="module-section">
-        <h2 className="section-title">💻 Exemplos Práticos</h2>
+        <h2 className="section-title">💻 Exemplos do Dia a Dia</h2>
         <div className="glass-card">
           <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1rem' }}>
-            Padrão de Imutabilidade Estrita em TypeScript
+            Lista Dinâmica Completa com Tipagem
           </h3>
+          <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Veja como juntamos JSX, Props, Chaves (<code>{'{ }'}</code>), Renderização Condicional e <code>.map()</code> em um cenário real.
+          </p>
           <pre>
-            <code>{`import React, { useState } from 'react';
-
-interface UserProfile {
-  name: string;
-  skills: string[];
-  stats: { score: number };
+            <code>{`interface Todo {
+  id: string;
+  title: string;
+  isCompleted: boolean;
 }
 
-export const ProfileEditor: React.FC = () => {
-  const [user, setUser] = useState<UserProfile>({
-    name: 'Carlos Dev',
-    skills: ['React', 'TypeScript'],
-    stats: { score: 100 }
-  });
-
-  // ✅ FORMA CORRETA: Criar novas referências para objetos aninhados
-  const addSkill = (skill: string) => {
-    setUser(prev => ({
-      ...prev,
-      skills: [...prev.skills, skill]
-    }));
-  };
-
-  // ❌ FORMA INCORRETA (Mutação direta):
-  // user.skills.push(skill);
-  // setUser(user); // React NÃO detectará mudança pois user === prev!
-
+const TodoList = ({ todos }: { todos: Todo[] }) => {
   return (
-    <div>
-      <h3>{user.name}</h3>
-      <p>Score: {user.stats.score}</p>
-    </div>
+    <ul>
+      {todos.map(todo => (
+        // KEY é obrigatória!
+        <li key={todo.id} className={todo.isCompleted ? 'strike' : ''}>
+          {todo.title} 
+          {/* Renderização Condicional */}
+          {todo.isCompleted && ' ✅'}
+        </li>
+      ))}
+    </ul>
   );
 };`}</code>
           </pre>
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 🧪 Prática / Simulador */}
       <section className="module-section">
-        <h2 className="section-title">🧪 Prática / Simulador</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {/* Lab 1: Imutabilidade */}
-          <div className="glass-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-              🔬 Laboratório 1: Imutabilidade e Referências de Memória
-            </h3>
-            <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              No React, o estado NUNCA deve ser modificado diretamente (ex: <code>profile.skills.push()</code>).
-              Criar novos objetos com <code>...spread</code> garante que a reconciliação detecte a mudança por igualdade referencial (<code>O(1)</code>).
-            </p>
+        <h2 className="section-title">🧪 Prática: O Mega Simulador</h2>
+        <div className="glass-card" style={{ background: '#f8fafc', border: '1px solid var(--neutral-200)' }}>
+          <p style={{ color: 'var(--neutral-500)', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
+            Experimente alterar as propriedades abaixo e veja a UI se atualizando instantaneamente. Este mini-app une <strong>Props, Condicionais, Listas e Imutabilidade</strong> em um só lugar.
+          </p>
 
-            <div className="grid-2">
-              <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-200)' }}>
-                <h4 style={{ fontWeight: 700, marginBottom: '1rem', color: '#0f172a' }}>Perfil do Usuário (Estado Atual)</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.9rem' }}>
-                  <div><strong>Nome:</strong> {userProfile.name}</div>
-                  <div><strong>Cargo:</strong> {userProfile.role}</div>
-                  <div><strong>Commits:</strong> {userProfile.stats.commits}</div>
-                  <div><strong>Score:</strong> {userProfile.stats.score}%</div>
-                  <div>
-                    <strong>Skills:</strong>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.4rem' }}>
-                      {userProfile.skills.map((s, idx) => (
-                        <span key={idx} className="badge badge-primary">{s}</span>
-                      ))}
-                    </div>
-                  </div>
+          <div className="grid-2">
+            {/* PAINEL DE CONTROLE (O Pai) */}
+            <div style={{ background: '#fff', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0', boxShadow: 'var(--shadow-sm)' }}>
+              <h4 style={{ fontWeight: 700, marginBottom: '1rem', color: '#0f172a' }}>Painel de Controle</h4>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '0.25rem' }}>
+                    Nome do Usuário (Variável em JSX)
+                  </label>
+                  <input 
+                    type="text" 
+                    className="input" 
+                    value={userName} 
+                    onChange={e => setUserName(e.target.value)} 
+                  />
                 </div>
 
-                <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <form onSubmit={handleAddSkill} style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="Nova habilidade..."
-                      value={newSkill}
-                      onChange={e => setNewSkill(e.target.value)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input 
+                    type="checkbox" 
+                    id="showAvatar" 
+                    checked={showAvatar} 
+                    onChange={e => setShowAvatar(e.target.checked)} 
+                  />
+                  <label htmlFor="showAvatar" style={{ fontSize: '0.9rem', color: '#334155', cursor: 'pointer' }}>
+                    Mostrar Avatar (Renderização Condicional)
+                  </label>
+                </div>
+
+                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '0.5rem' }}>
+                    Adicionar Habilidade (Listas e Keys)
+                  </label>
+                  <form onSubmit={handleAddSkill} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <input 
+                      type="text" 
+                      className="input" 
+                      placeholder="Ex: Node.js" 
+                      value={newSkill} 
+                      onChange={e => setNewSkill(e.target.value)} 
                     />
-                    <button type="submit" className="btn btn-primary btn-sm">Adicionar</button>
-                  </form>
-                  <button onClick={handleIncrementCommits} className="btn btn-secondary btn-sm">
-                    Incrementar Commits (+1)
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ background: '#0f172a', color: '#e2e8f0', padding: '1.25rem', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column' }}>
-                <h4 style={{ color: '#38bdf8', fontWeight: 700, marginBottom: '0.75rem', fontSize: '0.95rem' }}>
-                  📡 Log de Mudança Referencial (Histórico)
-                </h4>
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
-                  {historyLog.map((log, idx) => (
-                    <div key={idx} style={{ color: idx === 0 ? '#4ade80' : '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.35rem' }}>
-                      {log}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input 
+                        type="checkbox" 
+                        id="isImportant" 
+                        checked={isImportant} 
+                        onChange={e => setIsImportant(e.target.checked)} 
+                      />
+                      <label htmlFor="isImportant" style={{ fontSize: '0.85rem', color: '#475569', cursor: 'pointer' }}>
+                        Destaque (Estilo Condicional)
+                      </label>
                     </div>
-                  ))}
+                    <button type="submit" className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }}>Adicionar à Lista</button>
+                  </form>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Lab 2: Virtual DOM & Reconciliação */}
-          <div className="glass-card">
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-              ⚡ Laboratório 2: Reconciliação & Keys no Virtual DOM
-            </h3>
-            <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              O React compara o Virtual DOM anterior com o novo (Diffing Algorithm). Observe como o contador re-renderiza isoladamente sem recriar os outros nós da lista.
-            </p>
+            {/* A UI RENDERIZADA (O Filho) */}
+            <div style={{ background: '#0f172a', padding: '1.5rem', borderRadius: 'var(--radius-md)', color: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <h4 style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1.5rem' }}>
+                Preview do Componente
+              </h4>
+              
+              {/* Renderização Condicional */}
+              {showAvatar && (
+                <div style={{ marginBottom: '1rem' }}>
+                  {/* Props sendo passadas */}
+                  <Avatar url="https://i.pravatar.cc/150?img=11" alt="Avatar do Dev" size={100} />
+                </div>
+              )}
+              
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>{userName}</h2>
+              <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Desenvolvedor(a)</p>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ padding: '0.85rem 1.25rem', background: '#f0f9ff', border: '1.5px solid #bae6fd', borderRadius: 'var(--radius-md)' }}>
-                <span style={{ fontSize: '0.9rem', color: '#0369a1', fontWeight: 600 }}>Contador Isolado: </span>
-                <strong style={{ fontSize: '1.4rem', color: '#0284c7' }}>{counter}</strong>
+              <div style={{ width: '100%', textAlign: 'left' }}>
+                <h5 style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.75rem', borderBottom: '1px solid #334155', paddingBottom: '0.25rem' }}>
+                  Skills (Renderizando Array)
+                </h5>
+                <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', listStyle: 'none', padding: 0 }}>
+                  {skills.length === 0 ? (
+                    <li style={{ fontSize: '0.85rem', color: '#64748b' }}>Nenhuma skill adicionada.</li>
+                  ) : (
+                    // Uso do .map() e da KEY obrigatória
+                    skills.map(skill => (
+                      <li key={skill.id} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        {/* Componente Filho recebendo props condicionais */}
+                        <SkillTag name={skill.name} isImportant={skill.isImportant} />
+                        <button 
+                          onClick={() => handleRemoveSkill(skill.id)}
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0 4px', fontSize: '1.2rem', lineHeight: 1 }}
+                          title="Remover"
+                        >
+                          &times;
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
               </div>
-              <button onClick={() => setCounter(c => c + 1)} className="btn btn-primary">
-                + Incrementar Contador
-              </button>
             </div>
-
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-              <input
-                type="text"
-                className="input"
-                placeholder="Adicionar conceito à lista..."
-                value={newItemText}
-                onChange={e => setNewItemText(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleAddItem()}
-              />
-              <button onClick={handleAddItem} className="btn btn-primary">
-                Inserir
-              </button>
-            </div>
-
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {items.map(item => (
-                <li
-                  key={item.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.75rem 1rem',
-                    background: '#f8fafc',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--neutral-200)'
-                  }}
-                >
-                  <span style={{ fontSize: '0.9rem', color: '#1e293b' }}>
-                    🔑 <code>key="{item.id}"</code> — {item.label}
-                  </span>
-                  <button
-                    onClick={() => handleRemoveItem(item.id)}
-                    className="btn btn-danger btn-sm"
-                  >
-                    Remover
-                  </button>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       </section>
-        
-        
+
       {/* SEÇÃO: 🛡️ Boas Práticas */}
       <section className="module-section">
-        <h2 className="section-title">🛡️ Boas Práticas</h2>
+        <h2 className="section-title">🛡️ Boas Práticas & Mercado</h2>
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="alert alert-warning">
+          
+          <div className="alert alert-danger">
             <div>
-              <strong>Armadilha Comum:</strong> Usar o índice do array como <code>key</code> em listas dinâmicas (<code>key=&#123;index&#125;</code>). Isso causa bugs graves de estado preservado ao reordenar ou remover itens. Sempre use IDs estáveis e únicos.
+              <strong>Erro Clássico com Arrays de JSX:</strong> Nunca use o índice (<code>index</code>) do <code>map</code> como <code>key</code> se a sua lista puder ser ordenada, filtrada ou tiver itens inseridos/removidos. O React usa a <code>key</code> para casar o elemento da renderização anterior com a nova. Usar índices bagunçará o estado interno dos componentes.
             </div>
           </div>
 
-          <div className="alert alert-success">
+          <div className="alert alert-warning">
             <div>
-              <strong>Padrão de Produção:</strong> Mantenha os componentes puros. Um componente React deve ser idempotente: dada a mesma entrada de <code>props</code> e <code>state</code>, ele deve produzir exatamente a mesma saída de JSX sem efeitos colaterais na fase de render.
+              <strong>Cuidado com &&:</strong> Não coloque números à esquerda do operador <code>&&</code>. Por exemplo, <code>messages.length && &lt;p&gt;Novas mensagens&lt;/p&gt;</code>. Se <code>messages.length</code> for <code>0</code>, o React renderizará o número <code>0</code> na tela! O correto é forçar um booleano: <code>messages.length &gt; 0 && ...</code>.
             </div>
           </div>
+          
+          <div className="alert alert-success">
+            <div>
+              <strong>Princípio DRY (Don't Repeat Yourself):</strong> Extraia a UI em componentes menores e puros. Como vimos no exemplo, o <code>Avatar</code> e a <code>SkillTag</code> são componentes isolados, o que deixa o arquivo principal super limpo e fácil de manter.
+            </div>
+          </div>
+
         </div>
       </section>
-        
-      
-</div>
+
+    </div>
   );
 };
