@@ -1,4 +1,93 @@
 import React, { useState } from 'react';
+import { Sandpack } from '@codesandbox/sandpack-react';
+
+const codeAppJs = `import { useState } from "react";
+import "./styles.css";
+
+// 1. Seu Primeiro Componente (com Props!)
+function Avatar({ person, size }) {
+  return (
+    <img
+      className="avatar"
+      src={'https://i.pravatar.cc/150?img=' + person.imageId}
+      alt={person.name}
+      width={size}
+      height={size}
+    />
+  );
+}
+
+// Componente Principal
+export default function App() {
+  const [showAvatar, setShowAvatar] = useState(true);
+  
+  // Lista de Dados (que usará .map)
+  const skills = [
+    { id: 1, name: "React", isImportant: true },
+    { id: 2, name: "JSX", isImportant: false },
+    { id: 3, name: "Componentes", isImportant: true }
+  ];
+
+  return (
+    <div className="container">
+      <h1>Olá, React! ⚛️</h1>
+      
+      <button onClick={() => setShowAvatar(!showAvatar)}>
+        Toggle Avatar
+      </button>
+
+      {/* Renderização Condicional */}
+      {showAvatar && (
+        <Avatar 
+          person={{ name: 'Super Dev', imageId: '11' }} 
+          size={100} 
+        />
+      )}
+
+      <h2>Minhas Skills:</h2>
+      <ul>
+        {/* Renderizando Listas com chaves (Keys) */}
+        {skills.map(skill => (
+          <li key={skill.id} className={skill.isImportant ? "important" : ""}>
+            {skill.name} {skill.isImportant && "⭐"}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+`;
+
+const codeStylesCss = `body {
+  font-family: sans-serif;
+  padding: 20px;
+  background: #0f172a;
+  color: white;
+}
+.container {
+  max-width: 400px;
+  margin: 0 auto;
+}
+.avatar {
+  border-radius: 50%;
+  margin-top: 20px;
+  border: 3px solid #38bdf8;
+}
+button {
+  background: #38bdf8;
+  color: #0f172a;
+  border: none;
+  padding: 8px 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.important {
+  color: #38bdf8;
+  font-weight: bold;
+}
+`;
+
 
 // --- SUB-COMPONENTES PARA O LABORATÓRIO PRÁTICO ---
 // 1. Componente Puro com Props
@@ -356,6 +445,35 @@ const TodoList = ({ todos }: { todos: Todo[] }) => {
             </div>
           </div>
 
+        </div>
+      </section>
+
+      {/* SEÇÃO: 🚀 Sandbox (VSCode na Nuvem) */}
+      <section className="module-section">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+          <h2 className="section-title" style={{ marginBottom: 0 }}>🚀 Laboratório: Vamos fazer juntos!</h2>
+          <span className="badge badge-success">Live Code</span>
+        </div>
+        
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: '1.6', fontSize: '1.1rem' }}>
+          A teoria está legal, mas a prática é melhor! O código abaixo é um mini-VSCode rodando direto no seu navegador.
+          Altere a array <code>skills</code>, adicione o seu nome no <code>Avatar</code>, mude o CSS e veja a mágica acontecer ao vivo na tela da direita.
+        </p>
+
+        <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+          <Sandpack
+            template="react"
+            theme="dark"
+            files={{
+              "/App.js": codeAppJs,
+              "/styles.css": codeStylesCss,
+            }}
+            options={{
+              showNavigator: true,
+              showTabs: true,
+              editorHeight: 600,
+            }}
+          />
         </div>
       </section>
 
