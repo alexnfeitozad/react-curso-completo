@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Sandpack } from '@codesandbox/sandpack-react';
 
 const codeAppJs = `import "./styles.css";
@@ -78,67 +78,7 @@ const codeStylesCss = `body {
 `;
 
 
-// --- SUB-COMPONENTES PARA O LABORATÓRIO PRÁTICO ---
-// 1. Componente Puro com Props
-interface AvatarProps {
-  url: string;
-  alt: string;
-  size?: number;
-}
-const Avatar: React.FC<AvatarProps> = ({ url, alt, size = 50 }) => {
-  return (
-    <img 
-      src={url} 
-      alt={alt} 
-      style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary-500)' }} 
-    />
-  );
-};
-
-// 2. Componente com Renderização Condicional e Listas
-interface SkillProps {
-  name: string;
-  isImportant?: boolean;
-}
-const SkillTag: React.FC<SkillProps> = ({ name, isImportant }) => {
-  return (
-    <span className={`badge ${isImportant ? 'badge-primary' : 'badge-neutral'}`}>
-      {name} {isImportant && '⭐'}
-    </span>
-  );
-};
-
-// --- COMPONENTE PRINCIPAL ---
 export const Modulo01Fundamentos: React.FC = () => {
-  
-  // Estado para o Simulador
-  const [userName, setUserName] = useState('Super Dev');
-  const [showAvatar, setShowAvatar] = useState(true);
-  const [skills, setSkills] = useState([
-    { id: '1', name: 'React', isImportant: true },
-    { id: '2', name: 'TypeScript', isImportant: true },
-    { id: '3', name: 'CSS', isImportant: false }
-  ]);
-  const [newSkill, setNewSkill] = useState('');
-  const [isImportant, setIsImportant] = useState(false);
-
-  const handleAddSkill = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSkill.trim()) return;
-    
-    // Imutabilidade: criando novo array e adicionando novo objeto
-    setSkills([
-      ...skills, 
-      { id: String(Date.now()), name: newSkill.trim(), isImportant }
-    ]);
-    setNewSkill('');
-    setIsImportant(false);
-  };
-
-  const handleRemoveSkill = (idToRemove: string) => {
-    // Imutabilidade: filtrando o array existente
-    setSkills(skills.filter(s => s.id !== idToRemove));
-  };
 
   return (
     <div className="page-container">
@@ -297,119 +237,7 @@ const TodoList = ({ todos }: { todos: Todo[] }) => {
         </div>
       </section>
 
-      {/* SEÇÃO: 🧪 Prática / Simulador */}
-      <section className="module-section">
-        <h2 className="section-title">🧪 Prática: O Mega Simulador</h2>
-        <div className="glass-card" style={{ background: '#f8fafc', border: '1px solid var(--neutral-200)' }}>
-          <p style={{ color: 'var(--neutral-500)', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-            Experimente alterar as propriedades abaixo e veja a UI se atualizando instantaneamente. Este mini-app une <strong>Props, Condicionais, Listas e Imutabilidade</strong> em um só lugar.
-          </p>
 
-          <div className="grid-2">
-            {/* PAINEL DE CONTROLE (O Pai) */}
-            <div style={{ background: '#fff', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0', boxShadow: 'var(--shadow-sm)' }}>
-              <h4 style={{ fontWeight: 700, marginBottom: '1rem', color: '#0f172a' }}>Painel de Controle</h4>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '0.25rem' }}>
-                    Nome do Usuário (Variável em JSX)
-                  </label>
-                  <input 
-                    type="text" 
-                    className="input" 
-                    value={userName} 
-                    onChange={e => setUserName(e.target.value)} 
-                  />
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input 
-                    type="checkbox" 
-                    id="showAvatar" 
-                    checked={showAvatar} 
-                    onChange={e => setShowAvatar(e.target.checked)} 
-                  />
-                  <label htmlFor="showAvatar" style={{ fontSize: '0.9rem', color: '#334155', cursor: 'pointer' }}>
-                    Mostrar Avatar (Renderização Condicional)
-                  </label>
-                </div>
-
-                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '0.5rem' }}>
-                    Adicionar Habilidade (Listas e Keys)
-                  </label>
-                  <form onSubmit={handleAddSkill} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <input 
-                      type="text" 
-                      className="input" 
-                      placeholder="Ex: Node.js" 
-                      value={newSkill} 
-                      onChange={e => setNewSkill(e.target.value)} 
-                    />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <input 
-                        type="checkbox" 
-                        id="isImportant" 
-                        checked={isImportant} 
-                        onChange={e => setIsImportant(e.target.checked)} 
-                      />
-                      <label htmlFor="isImportant" style={{ fontSize: '0.85rem', color: '#475569', cursor: 'pointer' }}>
-                        Destaque (Estilo Condicional)
-                      </label>
-                    </div>
-                    <button type="submit" className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }}>Adicionar à Lista</button>
-                  </form>
-                </div>
-              </div>
-            </div>
-
-            {/* A UI RENDERIZADA (O Filho) */}
-            <div style={{ background: '#0f172a', padding: '1.5rem', borderRadius: 'var(--radius-md)', color: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-              <h4 style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1.5rem' }}>
-                Preview do Componente
-              </h4>
-              
-              {/* Renderização Condicional */}
-              {showAvatar && (
-                <div style={{ marginBottom: '1rem' }}>
-                  {/* Props sendo passadas */}
-                  <Avatar url="https://i.pravatar.cc/150?img=11" alt="Avatar do Dev" size={100} />
-                </div>
-              )}
-              
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>{userName}</h2>
-              <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Desenvolvedor(a)</p>
-
-              <div style={{ width: '100%', textAlign: 'left' }}>
-                <h5 style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.75rem', borderBottom: '1px solid #334155', paddingBottom: '0.25rem' }}>
-                  Skills (Renderizando Array)
-                </h5>
-                <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', listStyle: 'none', padding: 0 }}>
-                  {skills.length === 0 ? (
-                    <li style={{ fontSize: '0.85rem', color: '#64748b' }}>Nenhuma skill adicionada.</li>
-                  ) : (
-                    // Uso do .map() e da KEY obrigatória
-                    skills.map(skill => (
-                      <li key={skill.id} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        {/* Componente Filho recebendo props condicionais */}
-                        <SkillTag name={skill.name} isImportant={skill.isImportant} />
-                        <button 
-                          onClick={() => handleRemoveSkill(skill.id)}
-                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0 4px', fontSize: '1.2rem', lineHeight: 1 }}
-                          title="Remover"
-                        >
-                          &times;
-                        </button>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* SEÇÃO: 🛡️ Boas Práticas */}
       <section className="module-section">
