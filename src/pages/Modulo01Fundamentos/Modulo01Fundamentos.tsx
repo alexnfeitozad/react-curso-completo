@@ -1,58 +1,41 @@
 import React, { useState } from 'react';
 import { Sandpack } from '@codesandbox/sandpack-react';
 
-const codeAppJs = `import { useState } from "react";
-import "./styles.css";
+const codeAppJs = `import "./styles.css";
 
-// 1. Seu Primeiro Componente (com Props!)
-function Avatar({ person, size }) {
+// 1. Crie o seu primeiro componente!
+// Desafio: Faça o componente Profile retornar uma <div> contendo:
+// - Um <h1> com o nome recebido via props
+// - Uma <img> com a foto (src)
+// - Um <p> com a profissão
+function Profile(props) {
   return (
-    <img
-      className="avatar"
-      src={'https://i.pravatar.cc/150?img=' + person.imageId}
-      alt={person.name}
-      width={size}
-      height={size}
-    />
+    <div className="card">
+      {/* Escreva seu JSX aqui embaixo! */}
+      <h1>Nome Aqui</h1>
+      <p>Profissão Aqui</p>
+    </div>
   );
 }
 
-// Componente Principal
+// 2. Componente Principal (Já está pronto!)
 export default function App() {
-  const [showAvatar, setShowAvatar] = useState(true);
-  
-  // Lista de Dados (que usará .map)
-  const skills = [
-    { id: 1, name: "React", isImportant: true },
-    { id: 2, name: "JSX", isImportant: false },
-    { id: 3, name: "Componentes", isImportant: true }
-  ];
-
   return (
     <div className="container">
-      <h1>Olá, React! ⚛️</h1>
+      <h2>🚀 Meus Primeiros Componentes</h2>
       
-      <button onClick={() => setShowAvatar(!showAvatar)}>
-        Toggle Avatar
-      </button>
+      {/* Renderizando o componente e passando Props */}
+      <Profile 
+        nome="Ada Lovelace" 
+        profissao="Primeira Programadora da História"
+        foto="https://i.pravatar.cc/150?img=47"
+      />
 
-      {/* Renderização Condicional */}
-      {showAvatar && (
-        <Avatar 
-          person={{ name: 'Super Dev', imageId: '11' }} 
-          size={100} 
-        />
-      )}
-
-      <h2>Minhas Skills:</h2>
-      <ul>
-        {/* Renderizando Listas com chaves (Keys) */}
-        {skills.map(skill => (
-          <li key={skill.id} className={skill.isImportant ? "important" : ""}>
-            {skill.name} {skill.isImportant && "⭐"}
-          </li>
-        ))}
-      </ul>
+      <Profile 
+        nome="Alan Turing" 
+        profissao="Pai da Computação"
+        foto="https://i.pravatar.cc/150?img=11"
+      />
     </div>
   );
 }
@@ -65,26 +48,32 @@ const codeStylesCss = `body {
   color: white;
 }
 .container {
-  max-width: 400px;
+  max-width: 500px;
   margin: 0 auto;
 }
-.avatar {
-  border-radius: 50%;
-  margin-top: 20px;
-  border: 3px solid #38bdf8;
+.card {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #334155;
+  text-align: center;
 }
-button {
-  background: #38bdf8;
-  color: #0f172a;
-  border: none;
-  padding: 8px 16px;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.important {
+.card h1 {
+  margin-top: 10px;
+  font-size: 1.5rem;
   color: #38bdf8;
-  font-weight: bold;
+}
+.card img {
+  border-radius: 50%;
+  border: 3px solid #38bdf8;
+  width: 100px;
+  height: 100px;
+  margin-top: 10px;
+}
+.card p {
+  color: #94a3b8;
+  font-size: 0.9rem;
 }
 `;
 
@@ -457,7 +446,7 @@ const TodoList = ({ todos }: { todos: Todo[] }) => {
         
         <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: '1.6', fontSize: '1.1rem' }}>
           A teoria está legal, mas a prática é melhor! O código abaixo é um mini-VSCode rodando direto no seu navegador.
-          Altere a array <code>skills</code>, adicione o seu nome no <code>Avatar</code>, mude o CSS e veja a mágica acontecer ao vivo na tela da direita.
+          Seu primeiro <strong>Desafio</strong> é preencher o componente <code>Profile</code>. Use as variáveis recebidas via <code>props</code> para criar um cartão de apresentação usando JSX (com as chaves <code>{'{ }'}</code>)!
         </p>
 
         <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
