@@ -4,7 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { MobileHeader } from './components/MobileHeader';
 import { Home } from './pages/Home/Home';
 
-// Lazy or direct import of all 13 modules
+// Lazy or direct import of all 14 modules
 import { Modulo01Fundamentos } from './pages/Modulo01Fundamentos/Modulo01Fundamentos';
 import { Modulo02Hooks } from './pages/Modulo02Hooks/Modulo02Hooks';
 import { Modulo03Composicao } from './pages/Modulo03Composicao/Modulo03Composicao';
@@ -18,6 +18,7 @@ import { Modulo10Testes } from './pages/Modulo10Testes/Modulo10Testes';
 import { Modulo11Performance } from './pages/Modulo11Performance/Modulo11Performance';
 import { Modulo12Patterns } from './pages/Modulo12Patterns/Modulo12Patterns';
 import { Modulo13ProjetoFinal } from './pages/Modulo13ProjetoFinal/Modulo13ProjetoFinal';
+import { Modulo14Laboratorio } from './pages/Modulo14Laboratorio/Modulo14Laboratorio';
 
 import './App.css';
 
@@ -55,6 +56,7 @@ export const App: React.FC = () => {
           <Route path="/modulo-11-performance" element={<Modulo11Performance />} />
           <Route path="/modulo-12-patterns-solid" element={<Modulo12Patterns />} />
           <Route path="/modulo-13-projeto-final" element={<Modulo13ProjetoFinal />} />
+          <Route path="/modulo-14-laboratorio" element={<Modulo14Laboratorio />} />
           {/* Catch-all */}
           <Route path="*" element={<Home />} />
         </Routes>

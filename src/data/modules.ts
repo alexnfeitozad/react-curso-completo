@@ -156,5 +156,17 @@ export const COURSE_MODULES: CursoModulo[] = [
     description: 'Plataforma completa conectando Estado, Forms, Modais, KPIs, Filtros e Toasts',
     shortDesc: 'Aplicação SPA completa pronta para produção unindo todos os conceitos.',
     tags: ['DevLearn Pro', 'CRUD Completo', 'KPIs Reativos', 'Toasts & Modais']
+  },
+  {
+    id: 'modulo-14-laboratorio',
+    number: '14',
+    phase: 3,
+    phaseName: 'Fase 3: Nível Arquiteto',
+    title: 'Módulo 14: Lab Interativo (CRUD)',
+    icon: '💻',
+    level: 'Master',
+    description: 'Ambiente de desenvolvimento in-browser com Sandpack',
+    shortDesc: 'Simulador interativo real mostrando a construção de um CRUD do zero.',
+    tags: ['Sandpack', 'Live Preview', 'CRUD', 'Code Editor']
   }
 ];
